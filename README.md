@@ -18,6 +18,12 @@ Start with [the delivery plan](docs/planning/plan.md), then read:
 - [Initial task backlog](tasks/README.md)
 - [Original product specification](docs/specs/project-spindle-spec-v0.2.md)
 
+The selected product stack is **Rust + PostgreSQL + OpenSearch**. Lineage and
+entity links use PostgreSQL tables; dedicated graph engines wait until formal
+reasoning. Aurora DSQL is a candidate AWS store to qualify later. The recommended
+gym foundation is [NeMo Gym with local Docker and optional Daytona](docs/planning/gym-platform-evaluation.md),
+subject to the integration spike.
+
 The proposed order is factory foundation → usable local product → first real-agent
 gym → complete non-formal-reasoning features → AWS → optional formal reasoning.
 The gym and factory are development infrastructure; the product remains agent-native.

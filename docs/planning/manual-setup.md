@@ -5,7 +5,10 @@
 - Build a standalone backend; there is no existing AWS Context service to integrate.
 - Support both Claude Code and Codex in the first usable release; Codex drives the
   first live gym. Include Claude Agent SDK integration in the prototype.
-- "Spark" meant **SPARQL**, not Apache Spark.
+- "Spark" meant **SPARQL**, not Apache Spark. The later instruction defers
+  Cypher/SPARQL and dedicated graph engines until formal reasoning.
+- Write Spindle code in **Rust**; retain **PostgreSQL + OpenSearch**. PostgreSQL
+  adjacency represents graph data now. Aurora DSQL is a possible future AWS store.
 - Defer formal reasoning only. LLM extraction, synthesis, contradiction handling,
   and evidence-backed Night Shift insights remain in scope.
 - Run services locally; hosted model calls are acceptable. Offline agent inference
@@ -14,22 +17,21 @@
 
 ## Proposed defaults for review
 
-TypeScript monorepo; PostgreSQL ledger/jobs; local OpenSearch; Cypher adapter using
-Neo4j; RDF/SPARQL projection using Jena/Fuseki; managed AWS equivalents later.
-Author-controlled corrections by default, activation scoped to user/workspace,
-private filtered traces, and no self-approval of quality gates. The remaining key
-architecture decision is whether the two local graph projections are acceptable.
-We recommend that tradeoff over claiming a single local engine exactly emulates
-Neptune Analytics plus SPARQL. M0 tests the actual image/resource/query compatibility.
+Rust Cargo workspace with PostgreSQL ledger/jobs/entity adjacency and OpenSearch.
+Author-controlled corrections, user/workspace activation, private filtered traces,
+and no self-approval of quality gates. Qualify NeMo Gym with local Docker first;
+Daytona is an optional remote execution profile, not a local prerequisite. See the
+[platform evaluation](gym-platform-evaluation.md) for source evidence and remaining
+work. DSQL requires a separate SQL/transaction compatibility spike before adoption.
 
 ## Actions that can be taken now
 
-1. Review the proposed milestone order and graph tradeoff. Implementation tasks
+1. Review the proposed milestone order and NeMo qualification criteria. Implementation tasks
    remain proposed until the plan is adopted; the original spec is retained.
 2. Choose the development machine used for the first local run. Linux or macOS
    with a Docker-compatible Compose runtime is the proposed target. Record OS,
-   architecture and available RAM/disk in the M0 doctor report. Plan roughly 16 GB
-   RAM as an initial development budget for the full storage stack; measure it.
+   architecture and available RAM/disk in the M0 doctor report. Measure memory/disk needs for PostgreSQL, OpenSearch and concurrent agent
+   containers; size the local concurrency accordingly.
 3. Identify which existing OpenAI/Codex and Anthropic accounts may fund the live
    runs. Do not paste keys into chat or commit them. The repository's M0 runbook
    must name the exact supported authentication and credential locations after
@@ -80,6 +82,23 @@ references but could not be fetched from this environment.
 5. Inspect the baseline/treatment report and evidence before enabling scheduled
    unattended live evaluations. Configure a daily aggregate ceiling too: a per-run
    cap alone does not limit unlimited repeated runs.
+
+## Optional Daytona profile: after local gym qualification
+
+1. Select the Daytona organization and region permitted for synthetic test projects.
+   Check current pricing and concurrency/resource quotas. Do not deploy the old
+   unmaintained public core as an assumed supported local service.
+2. In the Daytona dashboard, create a controller-only API key with the documented
+   sandbox create/cleanup permissions and expiry. Store `DAYTONA_API_KEY` in the
+   configured secret manager; never mount it into an agent sandbox. Snapshot
+   permissions are only needed if the chosen provider configuration uses them.
+3. Pin the compatible SDK/NeMo version and image/snapshot using the M0 runbook.
+   Record network endpoints and verify that remote agents reach authenticated
+   Spindle/NeMo/model services; localhost on a developer machine is not reachable
+   from a remote sandbox by default.
+4. Run one small scenario and verify artifacts, cancellation and confirmed deletion.
+   Add TTL/janitor cleanup and aggregate cost accounting before scheduled runs.
+   Keep local Docker functional without any Daytona credentials.
 
 ## At M5: AWS (deferred)
 

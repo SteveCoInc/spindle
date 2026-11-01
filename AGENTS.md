@@ -39,7 +39,14 @@ do not turn routine reversible implementation choices into approval requests.
   output supported by the retracted source. Bounded rollback discloses residuals.
 - Do not implement formal reasoning in the first release. Preserve its extension
   boundary and future independent-justification model.
-- Do not claim Neo4j is a Neptune emulator or local OpenSearch is Serverless parity.
+- Implement Spindle-owned code in Rust; retain PostgreSQL and OpenSearch. Store
+  lineage and entity links in relational tables. Defer dedicated graph engines and
+  Cypher/SPARQL endpoints until formal reasoning.
+- Treat Aurora DSQL as a candidate, not a drop-in PostgreSQL replacement. Qualify
+  transactions, integrity, queues and migrations before claiming cloud support.
+- Evaluate NeMo Gym with local Docker and optional Daytona using the recorded
+  platform spike. External tool runtimes may use other languages; identify any
+  custom non-Rust glue before adding it. Do not claim local OpenSearch is Serverless parity.
 
 ## Verification integrity and autonomy
 

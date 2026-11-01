@@ -11,13 +11,14 @@ the repository rather than reconstructing a chat.
 Proposed layout (directories below are not all implemented):
 
 ```text
-apps/api/                 HTTP and MCP entry points
-apps/worker/              durable jobs and scheduled maintenance
-packages/domain/          invariants and application services
-packages/storage/         SQL, search, Cypher, RDF and blob adapters
-packages/integrations/    Codex and Claude Code lifecycle adapters
-packages/contracts/       API/event/schema definitions
-gym/                      controller, runners and report generation
+crates/api/               Rust HTTP and MCP entry points
+crates/worker/            Rust durable jobs and scheduled maintenance
+crates/domain/            invariants and application services
+crates/storage/           PostgreSQL adjacency, search and blob adapters
+crates/integrations/      Codex and Claude Code lifecycle interfaces
+crates/contracts/         API/event/schema definitions
+crates/gym/               Rust scenario control, graders and reports
+gym/                      pinned NeMo config and external harness integration
 gym/scenarios/            seed refs, user roles, schedules, tool capabilities
 tests/                    unit, contract, integration and end-to-end suites
 evals/                    development datasets and grader contracts
@@ -59,16 +60,22 @@ work, preserve failure exit status, print its scope, and record tests run/skippe
 | `make doctor` | Check tools, services, versions and named credential presence; explain repairs |
 | `make up` / `make down` | Start/stop local services without silently deleting persistent data |
 | `make test` | Deterministic unit/domain/property tests; nonzero test count required |
-| `make test-integration` | Real PostgreSQL, OpenSearch and graph/RDF contract tests |
+| `make test-integration` | Real PostgreSQL adjacency/lineage and OpenSearch contract tests |
 | `make test-e2e` | Scripted multi-user API/MCP lifecycle including rollback and authorization |
-| `make check` | Format check, lint, types, contracts, migrations and dependency-boundary checks |
+| `make check` | Rust fmt, Clippy, build, contracts, migrations and dependency-boundary checks |
 | `make qualify TASK=…` | Required checks plus independent review in a clean checkout of candidate SHA |
 | `make review TASK=…` | Reviewer runner against exact SHA, base spec and collected test evidence |
 | `make pr TASK=…` | Verify evidence still matches HEAD, then submit branch/PR when authorized |
 | `make queue-status` | Show failed/stale checks, merge-group state and precise recovery action |
 | `make gym-smoke` | Fast deterministic scenario through production paths |
-| `make gym-live SCENARIO=…` | Real agent sessions with configured spend/time/concurrency ceilings |
+| `make gym-live SCENARIO=…` | Qualified NeMo harness; Docker default, optional Daytona; aggregate spend/time ceilings |
 | `make gym-report RUN=…` | Artifacts, outcomes, failure attribution and comparison with baseline |
+
+Use `cargo fmt --all -- --check`, `cargo clippy --workspace --all-targets -- -D warnings`,
+`cargo test --workspace --locked` (or a pinned qualified nextest runner), and locked
+builds behind the Make interface once the workspace exists. Commit Cargo.lock for
+the applications and pin rust-toolchain.toml. Test build features and release artifacts
+explicitly; do not claim all-feature compatibility without checking feature conflicts.
 
 Before CI exists, no command should falsely pass by printing "not implemented".
 Paid runs cannot silently fall back to mock mode. Missing model credentials produce

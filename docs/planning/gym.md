@@ -6,14 +6,19 @@ Separate the **Spindle service under test**, the **agent/project world**, and th
 **controller/evaluator**. They can run on one laptop. "Three systems" does not mean
 three copies of the entire product per agent. Start with one Spindle instance per
 experiment arm and separate identities/workspaces for its agents. Use separate
-service state, indices, graph namespaces and volumes for treatment/control arms.
+service state, relational graph data, search indices and volumes for treatment/control arms.
 
-The first gym uses real Codex sessions driven by the TypeScript SDK or supported
-CLI wrapper, not simulated model responses. Claude Code and Claude Agent SDK
-adapters follow the same runner contract. Scripted fixtures and recorded replay
+The preferred foundation is NeMo Gym, using its Codex CLI harness with local
+Docker and optional Daytona remote sandboxes, after the
+[platform qualification spike](gym-platform-evaluation.md). Spindle-owned scenario
+control and graders are Rust; NeMo and vendor runtimes remain external tools.
+Claude Code and Claude Agent SDK integrations follow the same product contract. Scripted fixtures and recorded replay
 remain useful for fast tests but are always labeled as such.
 
-A runner exposes start/resume/step/stop, observable tool/session events, completion,
+The scenario controller exposes start/step/stop and explicitly qualified resume
+semantics: the inspected NeMo Codex session supports one logical activation, so
+native multi-turn continuation and crash recovery must not be presumed. Preserve
+project state across fresh persona sessions. Capture observable tool/session events, completion,
 cost and artifact metadata. Use production MCP tools and upload/injection adapters.
 Session completion and partial-crash handling are part of the experiment. The
 controller may schedule user prompts, time advances and synthetic external events;
@@ -94,7 +99,9 @@ the pipeline against captured inputs, not reproducibility of the live agent.
 
 The user's initial live-run ceiling is **$100 and four hours per full run**. This is
 a maximum, not a spending target. Default pilot runs should be much smaller. Include
-all personas, extraction, embeddings, synthesis and judging in accounting. Track
+all personas, extraction, embeddings, synthesis, judging, sandbox compute/storage
+and relevant egress in accounting. Daytona needs explicit remote cleanup, TTLs
+and an external janitor so controller failure does not leave billable sandboxes. Track
 usage against a pinned price table with a conservative reserve for in-flight calls;
 stop launching calls before exhausting the ceiling and terminate at the deadline.
 Bound per-call tokens/time and concurrent sessions. If pricing or usage is unknown,

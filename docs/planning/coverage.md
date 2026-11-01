@@ -5,8 +5,12 @@ and test statuses are unimplemented/unrun.** A milestone assignment is not evide
 of delivery. M0 will make this mapping machine-checkable against task/test IDs.
 
 The user confirmed all non-formal-reasoning features remain in scope. Local
-Context/general memory, both agent hosts, SPARQL, the factory and gym are additional
+Context/general memory, both agent hosts, Rust, the factory and gym are additional
 requirements from the conversation; the existing-service premise is superseded.
+The latest user instruction defers dedicated graph engines and Cypher/SPARQL to
+formal reasoning. RET-05/06 and graph-related acceptance scenarios use PostgreSQL
+entity/relationship tables for the prototype; literal Neptune materialization is
+not an M1 obligation. This is an explicit storage amendment, not a dropped behavior.
 
 ## Functional requirements
 
@@ -31,12 +35,12 @@ requirements from the conversation; the existing-service premise is superseded.
 | MEM-08 | M1 | Extraction fixtures, evidence/DAG invariants, temporal and history tests |
 | MEM-09 | M3 | Extraction fixtures, evidence/DAG invariants, temporal and history tests |
 | MEM-10 | M3 | Extraction fixtures, evidence/DAG invariants, temporal and history tests |
-| RET-01 | M1 | Real hybrid search, ACL and optional graph projection contracts |
-| RET-02 | M1 | Real hybrid search, ACL and optional graph projection contracts |
-| RET-03 | M1 | Real hybrid search, ACL and optional graph projection contracts |
-| RET-04 | M1 | Real hybrid search, ACL and optional graph projection contracts |
-| RET-05 | M1 | Real hybrid search, ACL and optional graph projection contracts |
-| RET-06 | M1 | Real hybrid search, ACL and optional graph projection contracts |
+| RET-01 | M1 | Real hybrid search, ACL and PostgreSQL relationship contracts |
+| RET-02 | M1 | Real hybrid search, ACL and PostgreSQL relationship contracts |
+| RET-03 | M1 | Real hybrid search, ACL and PostgreSQL relationship contracts |
+| RET-04 | M1 | Real hybrid search, ACL and PostgreSQL relationship contracts |
+| RET-05 | M1 | Real hybrid search, ACL and PostgreSQL relationship contracts |
+| RET-06 | M1 | Real hybrid search, ACL and PostgreSQL relationship contracts |
 | ACL-01 | M1 | Multi-identity authorization and private-trace isolation tests |
 | ACL-02 | M3 | Multi-identity authorization and private-trace isolation tests |
 | ACL-03 | M1 | Multi-identity authorization and private-trace isolation tests |
@@ -113,14 +117,16 @@ M1 is not the same as implementing them.
 |---|---|---|
 | EXT-01 | Standalone Context instance and general-context ingest/search, not a nonexistent upstream service | M1 |
 | EXT-02 | Codex and Claude Code/SDK capture, status, tools and restart tested independently | M1 |
-| EXT-03 | Real local Cypher and SPARQL queries, stable IDs, project authorization and consistent retraction | M1 |
+| EXT-03 | PostgreSQL entity/lineage adjacency, stable IDs, project authorization and consistent retraction; dedicated graph engines/Cypher/SPARQL deferred | M1; language endpoints reconsidered M6 |
 | EXT-04 | Clean local bootstrap and same deterministic checks locally/CI | M0/M1 |
 | EXT-05 | Independent reviewer before PR and in CI; exact-commit evidence; failing checks prevent integration | M0 |
 | EXT-06 | Multiple real Codex personas, shared project, isolated sessions, observable capture and injection | M2 |
 | EXT-07 | Budget/time termination, $100/four-hour ceilings, private artifact retention and honest incomplete status | M2 |
 | EXT-08 | Matched enabled/disabled arms; externally checked outcomes; no grader leakage | M2/M4 |
 | EXT-09 | Numeric/ETL/BI/research and memory-aging scenarios; failure-driven improvement loop | M3/M4 |
-| EXT-10 | Actual AWS adapter conformance, identity, deployment and restore/teardown verification | M5 |
+| EXT-10 | Actual AWS adapter conformance, including DSQL if selected, identity and restore/teardown verification | M5 |
+| EXT-11 | Rust application/factory/gym-owned code; external framework runtime boundary explicit | M0 onward |
+| EXT-12 | NeMo/Docker and optional Daytona qualification: shared project lifecycle, capture, isolated grading, cleanup and total cost | M0 spike / M2 acceptance |
 
 ## Test layers
 
