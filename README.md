@@ -3,7 +3,7 @@
 Shared, traceable project memory for coding agents: capture useful knowledge,
 retrieve it across teammates' sessions, and correct or retract it with evidence.
 
-**Status: M0 foundation implemented; local verification in progress.** The Rust
+**Status: M0 foundation implemented and locally tested; live-agent validation blocked on network access.** The Rust
 workspace includes a foundation HTTP service, PostgreSQL migration, OpenSearch
 smoke check, TOML task validator, durable claim ledger, isolated task runner,
 clean-commit qualification and structured Codex reviewer. Product memory features
@@ -19,6 +19,9 @@ make up
 make check test test-integration
 make serve
 ```
+
+See [verification evidence](docs/runbooks/m0-evidence.md) and the remaining
+[manual actions](docs/runbooks/manual-actions.md). No schedule is needed yet.
 
 CI definitions cover Rust and storage checks. Independent review requires a
 working Codex login and network access. The runner does not yet dispatch on a
