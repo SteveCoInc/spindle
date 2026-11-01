@@ -22,7 +22,8 @@ make check test test-integration
 make serve
 ```
 
-See [verification evidence](docs/runbooks/m0-evidence.md) and the remaining
+See [product verification](docs/runbooks/product-evidence.md),
+[foundation verification](docs/runbooks/m0-evidence.md) and the remaining
 [manual actions](docs/runbooks/manual-actions.md). No schedule is needed yet.
 
 CI definitions cover Rust and storage checks. Independent review requires a

@@ -1,8 +1,10 @@
 # Requirements and acceptance coverage
 
-This maps the supplied spec to the proposed delivery plan. **All implementation
-and test statuses are unimplemented/unrun.** A milestone assignment is not evidence
-of delivery. M0 will make this mapping machine-checkable against task/test IDs.
+This maps the supplied spec to the delivery plan. The table below remains a
+requirement-level verification plan, not a claim of full coverage. Partial M1
+implementation and executed checks are recorded in [product evidence](../runbooks/product-evidence.md);
+M0 evidence is in [foundation evidence](../runbooks/m0-evidence.md). Host/model/gym
+acceptance and machine-checkable whole-spec coverage remain unfinished.
 
 The user confirmed all non-formal-reasoning features remain in scope. Local
 Context/general memory, both agent hosts, Rust, the factory and gym are additional
