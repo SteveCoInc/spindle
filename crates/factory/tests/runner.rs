@@ -85,3 +85,37 @@ fn out_of_scope_change_is_not_handed_off() {
     let l = spindle_factory::Ledger::open(&repo.path().join(".factory/ledger.db")).unwrap();
     assert_eq!(l.status().unwrap()[0].state, "running");
 }
+#[test]
+fn timed_out_worker_does_not_complete_or_lose_its_claim() {
+    let repo = tempfile::tempdir().unwrap();
+    let runtime = tempfile::tempdir().unwrap();
+    fixture(repo.path(), "changed.txt");
+    fake_agent(runtime.path());
+    fs::write(runtime.path().join("codex"), "#!/bin/sh\nsleep 30\n").unwrap();
+    let started = std::time::Instant::now();
+    let result = Command::new(env!("CARGO_BIN_EXE_spindle-factory"))
+        .env(
+            "PATH",
+            format!(
+                "{}:{}",
+                runtime.path().display(),
+                std::env::var("PATH").unwrap()
+            ),
+        )
+        .args([
+            "--repo",
+            repo.path().to_str().unwrap(),
+            "run",
+            "T001",
+            "fixture-worker",
+            "--timeout",
+            "1",
+        ])
+        .output()
+        .unwrap();
+    assert!(!result.status.success());
+    assert!(started.elapsed().as_secs() < 10);
+    assert!(String::from_utf8_lossy(&result.stderr).contains("timed out"));
+    let l = spindle_factory::Ledger::open(&repo.path().join(".factory/ledger.db")).unwrap();
+    assert_eq!(l.status().unwrap()[0].state, "running");
+}
