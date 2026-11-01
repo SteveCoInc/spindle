@@ -5,9 +5,10 @@ retrieve it across teammates' sessions, and correct or retract it with evidence.
 
 **Status: factory foundation and first local product slice implemented.** The Rust
 service supports authenticated projects, membership, snapshotted session bindings,
-explicit evidence capture, scoped lexical search and source retraction. A shared
+explicit evidence capture, privacy exclusions, scoped lexical search, versioned
+manually authored synthesis, author corrections and transitive retraction. A shared
 stdio MCP interface exposes these tools to coding hosts. Automatic transcript
-capture, extraction/synthesis, derived-memory rollback and the live gym remain in
+capture, automatic extraction/synthesis, resumable rollback jobs and the live gym remain in
 progress. See the [local product runbook](docs/runbooks/local-product.md).
 
 Start development with [the local runbook](docs/runbooks/local-development.md)

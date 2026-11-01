@@ -5,6 +5,31 @@ use std::io::{BufRead, Write};
 
 const TOOLS: &[(&str, &str, &[&str])] = &[
     (
+        "correct_memory",
+        "Author replaces a memory from its original inputs and retires dependent outputs",
+        &["memory", "request_key", "text"],
+    ),
+    (
+        "publish_memory",
+        "Publish explicitly authored synthesis from active same-project inputs; all inputs are required",
+        &["project", "request_key", "text", "inputs"],
+    ),
+    (
+        "retraction_status",
+        "Check transitive retraction and projection reconciliation",
+        &["session"],
+    ),
+    (
+        "personal_privacy",
+        "Set personal literal exclusions for future captures; does not rescan history",
+        &["terms"],
+    ),
+    (
+        "project_privacy",
+        "Owner sets additional project exclusions; cannot weaken personal exclusions",
+        &["project", "terms"],
+    ),
+    (
         "create_project",
         "Create a shared Software project; does not activate capture",
         &["name"],
@@ -106,7 +131,7 @@ fn dispatch(v: &Value) -> Value {
         "ping" => json!({}),
         "tools/list" => {
             let tools:Vec<Value>=TOOLS.iter().map(|(name,description,fields)| {
-                let properties:serde_json::Map<String,Value>=fields.iter().map(|f|(f.to_string(),json!({"type":"string"}))).collect();
+                let properties:serde_json::Map<String,Value>=fields.iter().map(|f|(f.to_string(),if *f=="terms" || *f=="inputs" {json!({"type":"array","items":{"type":"string"},"maxItems":100})} else {json!({"type":"string"})})).collect();
                 json!({"name":format!("spindle_{name}"),"description":description,"inputSchema":{"type":"object","properties":properties,"required":fields,"additionalProperties":false}})
             }).collect();
             json!({"tools":tools})
@@ -175,7 +200,7 @@ mod tests {
         );
         assert_eq!(r["result"]["protocolVersion"], "2025-03-26");
         let r = dispatch(&json!({"id":2,"method":"tools/list"}));
-        assert_eq!(r["result"]["tools"].as_array().unwrap().len(), 11);
+        assert_eq!(r["result"]["tools"].as_array().unwrap().len(), 16);
         let r = dispatch(&json!({"id":3,"method":"tools/call","params":{"name":"shell"}}));
         assert_eq!(r["error"]["code"], -32602);
     }

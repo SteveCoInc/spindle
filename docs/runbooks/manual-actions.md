@@ -6,7 +6,12 @@ The user published the domain additions. The active environment now enforces
 `chatgpt.com` and `api.github.com`, and GitHub repository API access succeeded.
 The implementation has draft PR [#1](https://github.com/steveash/spindle/pull/1).
 Foundation CI completed successfully; newer product commits need their own CI.
-Live Codex validation must still be exercised before claiming its review gate works.
+A live reviewer was attempted after publication. Its model endpoint returned
+401 and reported that the saved login could not be refreshed after logout/account
+change. Reconnect the Codex login using the platform's supported credential flow
+(or `codex login` on your own development machine), then rerun `make review`.
+Do not paste credentials into chat or Git. This blocks live review/gym execution;
+it does not block continued implementation or deterministic acceptance checks.
 No further network draft changes are required by these observations.
 
 ## GitHub controls, after first remote CI run

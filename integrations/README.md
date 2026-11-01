@@ -4,7 +4,8 @@ Build the binary with `cargo build --locked -p spindle-api`. Start `make serve`
 and `make worker` in separate terminals. Provision a distinct identity/token for
 each user using the [product runbook](../docs/runbooks/local-product.md).
 The shared Rust stdio MCP server exposes project, membership, activation,
-session, explicit capture, search, inspect and source retraction tools.
+session, explicit capture, privacy, search, inspect, manual synthesis, correction
+and transitive retraction tools.
 
 For Codex CLI, register the absolute path on your development machine:
 

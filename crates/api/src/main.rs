@@ -1,3 +1,4 @@
+mod lineage;
 mod mcp;
 mod product;
 use anyhow::{Context, Result, bail};
@@ -39,14 +40,19 @@ fn endpoint() -> String {
 }
 fn ready() -> Result<()> {
     let row = database()?.query_one(
-        "SELECT version FROM spindle_schema_migrations WHERE version = 2",
+        "SELECT version FROM spindle_schema_migrations WHERE version = 6",
         &[],
     )?;
     let _: i64 = row.get(0);
-    search()?
+    let health: serde_json::Value = search()?
         .get(format!("{}/_cluster/health", endpoint()))
         .send()?
-        .error_for_status()?;
+        .error_for_status()?
+        .json()?;
+    if !matches!(health["status"].as_str(), Some("green" | "yellow")) {
+        bail!("OpenSearch is not ready")
+    }
+
     Ok(())
 }
 fn integration() -> Result<()> {
@@ -101,7 +107,13 @@ fn main() -> Result<()> {
         Some("migrate") => {
             database()?.batch_execute(include_str!("../../../migrations/0001_foundation.sql"))?;
             database()?.batch_execute(include_str!("../../../migrations/0002_product.sql"))?;
-            println!("migrations 1–2 applied");
+            database()?.batch_execute(include_str!("../../../migrations/0003_privacy.sql"))?;
+            database()?.batch_execute(include_str!("../../../migrations/0004_lineage.sql"))?;
+            database()?.batch_execute(include_str!(
+                "../../../migrations/0005_memory_idempotency.sql"
+            ))?;
+            database()?.batch_execute(include_str!("../../../migrations/0006_corrections.sql"))?;
+            println!("migrations 1–6 applied");
         }
         Some("check") => {
             ready()?;
@@ -131,11 +143,17 @@ fn main() -> Result<()> {
         Some("project") => println!("projected {} sources", product::project_search()?),
         Some("serve") => {
             let address = env::var("SPINDLE_BIND").unwrap_or_else(|_| "127.0.0.1:8080".into());
+            let socket: std::net::SocketAddr = address
+                .parse()
+                .context("SPINDLE_BIND must be a loopback IP:port")?;
+            if !socket.ip().is_loopback() {
+                bail!("local profile only supports loopback API bindings")
+            }
             let server = tiny_http::Server::http(&address).map_err(|e| anyhow::anyhow!("{e}"))?;
             println!("Spindle foundation listening on {address}");
             for mut request in server.incoming_requests() {
                 let (status, body) = match (request.method().as_str(), request.url()) {
-                    ("GET", "/healthz") => (200, json!({"status":"alive","phase":"foundation"})),
+                    ("GET", "/healthz") => (200, json!({"status":"alive","phase":"local-product"})),
                     ("GET", "/readyz") => match ready() {
                         Ok(()) => (200, json!({"status":"ready"})),
                         Err(_) => (503, json!({"status":"dependencies_unavailable"})),
