@@ -3,9 +3,9 @@
 Implementation of the M0 foundation is now authorized and underway. The executable
 registry in `tasks/specs` currently contains the consolidated foundation task; this
 planning table retains the finer milestone decomposition. The working foundation
-covers portions of T001–T004 and T021. Real model review and GitHub automation remain
-blocked pending the [manual actions](../docs/runbooks/manual-actions.md); no task is
-claimed fully done merely because its code or deterministic tests exist.
+covers portions of T001–T004 and T021. GitHub API access now works and draft PR #1 exists. T005 tracks the first product
+slice; broader M1 work continues independently of live-review qualification. No
+task is claimed fully done merely because code or deterministic tests exist.
 
 | ID | Milestone | Depends on | Task and acceptance evidence |
 |---|---|---|---|

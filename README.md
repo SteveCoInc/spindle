@@ -3,11 +3,12 @@
 Shared, traceable project memory for coding agents: capture useful knowledge,
 retrieve it across teammates' sessions, and correct or retract it with evidence.
 
-**Status: M0 foundation implemented and locally tested; live-agent validation blocked on network access.** The Rust
-workspace includes a foundation HTTP service, PostgreSQL migration, OpenSearch
-smoke check, TOML task validator, durable claim ledger, isolated task runner,
-clean-commit qualification and structured Codex reviewer. Product memory features
-and the NeMo gym are still planned.
+**Status: factory foundation and first local product slice implemented.** The Rust
+service supports authenticated projects, membership, snapshotted session bindings,
+explicit evidence capture, scoped lexical search and source retraction. A shared
+stdio MCP interface exposes these tools to coding hosts. Automatic transcript
+capture, extraction/synthesis, derived-memory rollback and the live gym remain in
+progress. See the [local product runbook](docs/runbooks/local-product.md).
 
 Start development with [the local runbook](docs/runbooks/local-development.md)
 and operate the [initial factory](docs/runbooks/factory.md). With Rust 1.93.0,

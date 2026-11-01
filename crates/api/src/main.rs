@@ -1,3 +1,5 @@
+mod mcp;
+mod product;
 use anyhow::{Context, Result, bail};
 use postgres::{Client, NoTls};
 use serde_json::json;
@@ -37,7 +39,7 @@ fn endpoint() -> String {
 }
 fn ready() -> Result<()> {
     let row = database()?.query_one(
-        "SELECT version FROM spindle_schema_migrations WHERE version = 1",
+        "SELECT version FROM spindle_schema_migrations WHERE version = 2",
         &[],
     )?;
     let _: i64 = row.get(0);
@@ -98,7 +100,8 @@ fn main() -> Result<()> {
     match env::args().nth(1).as_deref() {
         Some("migrate") => {
             database()?.batch_execute(include_str!("../../../migrations/0001_foundation.sql"))?;
-            println!("migration 1 applied");
+            database()?.batch_execute(include_str!("../../../migrations/0002_product.sql"))?;
+            println!("migrations 1–2 applied");
         }
         Some("check") => {
             ready()?;
@@ -107,18 +110,65 @@ fn main() -> Result<()> {
         Some("integration") => {
             ready()?;
             integration()?;
+            product::integration()?;
         }
+        Some("mcp") => mcp::serve()?,
+        Some("request") => {
+            let args: serde_json::Value = serde_json::from_reader(std::io::stdin())?;
+            println!("{}", mcp::call(&args)?);
+        }
+        Some("worker") => loop {
+            match product::project_search() {
+                Ok(_) => {}
+                Err(e) => eprintln!("projection failed; will retry: {e:#}"),
+            }
+            std::thread::sleep(Duration::from_secs(2));
+        },
+        Some("provision") => {
+            product::provision(&env::var("SPINDLE_PRINCIPAL")?, &env::var("SPINDLE_TOKEN")?)?;
+            println!("principal provisioned");
+        }
+        Some("project") => println!("projected {} sources", product::project_search()?),
         Some("serve") => {
             let address = env::var("SPINDLE_BIND").unwrap_or_else(|_| "127.0.0.1:8080".into());
             let server = tiny_http::Server::http(&address).map_err(|e| anyhow::anyhow!("{e}"))?;
             println!("Spindle foundation listening on {address}");
-            for request in server.incoming_requests() {
+            for mut request in server.incoming_requests() {
                 let (status, body) = match (request.method().as_str(), request.url()) {
                     ("GET", "/healthz") => (200, json!({"status":"alive","phase":"foundation"})),
                     ("GET", "/readyz") => match ready() {
                         Ok(()) => (200, json!({"status":"ready"})),
                         Err(_) => (503, json!({"status":"dependencies_unavailable"})),
                     },
+                    ("POST", "/v1") => {
+                        let token = request
+                            .headers()
+                            .iter()
+                            .find(|h| h.field.equiv("Authorization"))
+                            .and_then(|h| h.value.as_str().strip_prefix("Bearer "))
+                            .unwrap_or("")
+                            .to_owned();
+                        let mut bytes = Vec::new();
+                        use std::io::Read;
+                        let result = request.as_reader().take(70_001).read_to_end(&mut bytes);
+                        if result.is_err() || bytes.len() > 70_000 {
+                            (413, json!({"error":"request_too_large"}))
+                        } else {
+                            match serde_json::from_slice::<product::Operation>(&bytes) {
+                                Err(_) => (400, json!({"error":"invalid_request"})),
+                                Ok(op) => match product::execute(&token, op) {
+                                    Ok(v) => (200, v),
+                                    Err(e) => match e.downcast_ref::<product::ApiError>() {
+                                        Some(e) => (e.0, json!({"error":e.1})),
+                                        None => {
+                                            eprintln!("request failed: {e:#}");
+                                            (503, json!({"error":"service_unavailable"}))
+                                        }
+                                    },
+                                },
+                            }
+                        }
+                    }
                     _ => (404, json!({"error":"not_found"})),
                 };
                 request.respond(
@@ -131,7 +181,9 @@ fn main() -> Result<()> {
                 )?;
             }
         }
-        _ => bail!("usage: spindle-api migrate|check|integration|serve"),
+        _ => bail!(
+            "usage: spindle-api migrate|check|integration|provision|project|worker|request|mcp|serve"
+        ),
     }
     Ok(())
 }

@@ -38,3 +38,11 @@ factory-pause:
 	$(FACTORY) pause
 factory-resume:
 	$(FACTORY) resume
+
+.PHONY: worker project mcp
+worker:
+	$(CARGO) run --quiet --locked -p spindle-api -- worker
+project:
+	$(CARGO) run --quiet --locked -p spindle-api -- project
+mcp:
+	$(CARGO) run --quiet --locked -p spindle-api -- mcp

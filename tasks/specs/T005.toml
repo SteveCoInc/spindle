@@ -1,0 +1,8 @@
+id = "T005"
+title = "First authenticated local evidence-sharing slice"
+status = "ready"
+dependencies = []
+requirements = ["EXT-04", "EXT-11"]
+acceptance = ["HTTP authorization rejects outsiders and revoked members", "Session activation is snapshotted", "Evidence retries are idempotent and conflicts fail", "Real OpenSearch retrieval returns scoped provenance", "Retraction hides stale index hits and closes capture", "MCP transport exposes shared tools without claiming automatic host capture"]
+scope = ["crates/", "migrations/", "integrations/", "docs/", "tasks/", "Makefile", "Cargo.toml", "Cargo.lock", "README.md", "AGENTS.md"]
+prompt = "Build and qualify the first local product slice. Preserve honest boundaries: explicit evidence only, lexical search, no automatic transcript capture, no derived-memory rollback claim. Continue later M1 tasks after this slice, independent of unrelated live-agent blockers."

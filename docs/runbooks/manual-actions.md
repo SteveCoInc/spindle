@@ -1,27 +1,13 @@
 # Remaining manual actions
 
-## Environment network policy
+## Current environment access
 
-The current instance can read GitHub via Git and pull packages/images, but its
-policy denied both the authenticated Codex endpoint (`chatgpt.com`) and the GitHub
-API (`api.github.com`). Existing Codex sign-in was detected; a missing API key was
-not assumed. The existing GitHub API binding could not be qualified through the
-denied network route.
-
-1. Open this cloud environment's settings.
-2. Review the saved draft: it adds `chatgpt.com` and `api.github.com`, preserving
-   existing package-manager network presets. No credential values were added.
-3. Save the changes and publish the environment as required by the platform to
-   activate the draft. The agent has not published it.
-4. After reconnection, run the local runbook's toolchain exports, `make doctor`,
-   and `make review`. A successful draft save alone does not prove runtime access.
-5. Retry `gh api repos/steveash/spindle --jq '{default_branch,permissions}'`.
-   If that now returns an authentication error, repair the GitHub connection in
-   environment settings. Do not copy credentials into chat or repository files.
-
-Until step 4 succeeds, independent model review and a real Codex worker round-trip
-are blocked. Until step 5 succeeds, PR API and repository-settings automation are
-unverified. These do not block deterministic local tests.
+The user published the domain additions. The active environment now enforces
+`chatgpt.com` and `api.github.com`, and GitHub repository API access succeeded.
+The implementation has draft PR [#1](https://github.com/steveash/spindle/pull/1).
+Foundation CI completed successfully; newer product commits need their own CI.
+Live Codex validation must still be exercised before claiming its review gate works.
+No further network draft changes are required by these observations.
 
 ## GitHub controls, after first remote CI run
 
