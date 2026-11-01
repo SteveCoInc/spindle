@@ -60,3 +60,8 @@ The expanded workspace now has 13 passing Rust tests, including calibration of t
 trusted retry-policy gym seed: its external oracle detects the intended legacy
 retry defect (two oracle cases pass, one fails as expected). No live persona
 performance or treatment/control benefit is inferred from that fixture result.
+
+Final code checkpoint `91b4815b5335aa6a8197b06d265d36699c299670` passed clean-clone
+qualification (format/Clippy/task validation, all Rust tests, real-storage acceptance).
+The exact-SHA qualification report is retained in local `artifacts/91b4815.../`.
+Independent model approval remains absent because the reviewer login failed.

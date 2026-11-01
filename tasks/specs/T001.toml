@@ -7,5 +7,5 @@ acceptance = ["Rust fmt, clippy and tests pass", "Duplicate claim and stale comp
 scope = ["crates/", "infra/", "migrations/", "factory/", "tasks/", "docs/", "Makefile", ".github/"]
 prompt = "Implement and validate the M0 foundation. Preserve original product spec. Report external authentication/network blockers rather than claiming unrun checks passed."
 
-# Implementation and deterministic verification exist. Unblock after network
-# activation for live independent review; see docs/runbooks/m0-evidence.md.
+# Implementation and deterministic verification exist. Unblock after Codex
+# authentication repair for live independent review; see docs/runbooks/manual-actions.md.

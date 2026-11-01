@@ -15,7 +15,7 @@
   is not a requirement.
 - Full live gym run ceiling: **$100 and four hours**.
 
-## Proposed defaults for review
+## Implementation defaults
 
 Rust Cargo workspace with PostgreSQL ledger/jobs/entity adjacency and OpenSearch.
 Author-controlled corrections, user/workspace activation, private filtered traces,
@@ -26,7 +26,7 @@ work. DSQL requires a separate SQL/transaction compatibility spike before adopti
 
 ## Actions that can be taken now
 
-1. The user authorized autonomous M0 implementation. Follow the implemented
+1. The user authorized autonomous implementation across the overall plan. Follow the implemented
    [runbooks](../runbooks/local-development.md) and current
    [manual actions](../runbooks/manual-actions.md). The original spec is retained.
 2. Choose the development machine used for the first local run. Linux or macOS
