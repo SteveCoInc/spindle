@@ -1,0 +1,2 @@
+# spindle
+context for projects
