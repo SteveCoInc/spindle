@@ -160,3 +160,11 @@ as the shared noun while retaining historical `MEM-*` identifiers. It adds:
 
 Prior memory-service or MCP tests do not establish this new board/subscription
 coverage. The task definitions distinguish implementation from real-host acceptance.
+
+## Deferred external audit and project control
+
+Specification §31 adds FUT-AUD-01–03 and FUT-CTL-01–04. These cover policy-authorized
+exports, external organizational analysis integration, project-access suspension,
+concurrent-work fencing, optional stop delivery and explicit recovery. They are
+future qualification scenarios, **not current-phase requirements or implemented
+controls**. A stop message must not be counted as confirmed process termination.

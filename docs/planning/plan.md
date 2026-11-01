@@ -81,3 +81,17 @@ Hold ordinary note retrieval and code publication constant for board-enabled vs
 board-disabled comparisons; optionally ablate notifications. Existing retry-policy
 scenarios remain useful. New BRD/SUB requirements and AT-25–40 are specified, not
 implemented or verified by the current service's prior tests. See tasks T023–T026.
+
+## Deferred: external audit integration and project off switch
+
+[v0.3 §31](../specs/project-spindle-spec-v0.3.md#31-future-extension-external-organizational-audit-and-project-off-switch)
+records a future export interface for authorized traces, notes, board state and
+agent activity to an external organizational hazard/rule-analysis service. That
+service owns organizational rule evaluation. Spindle's future scope also includes
+an authorized project suspension control and optional harness stop messaging.
+Service-side access denial must be distinguished from confirmed agent termination.
+
+This extension is explicitly outside the current prototype phase. Do not schedule
+implementation as part of T023–T026 or treat FUT-AUD/FUT-CTL requirements as current
+release gates. Preserve the documented privacy, authorization, delivery and control
+boundaries when designing later adapters; no new runtime capability is claimed.

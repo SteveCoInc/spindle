@@ -6,10 +6,12 @@
 **Internal codename:** Project Spindle (not a customer-facing product name)  
 **Product context:** Standalone Spindle project knowledge service; “Context” remains the illustrative agent-tool namespace  
 **Audience:** Product, design, engineering, security, and developer-experience teams  
-**Revision note:** v0.3 adopts **notes** as the common term for previously named memories, adds the optional project board and active-session subscriptions, and adds a data-project collaboration hero scenario. It incorporates the subsequently confirmed standalone Rust/PostgreSQL/OpenSearch direction. v0.2 remains unchanged as the historical source.  
+**Revision note:** v0.3 adopts **notes** as the common term for previously named memories, adds the optional project board and active-session subscriptions, and adds a data-project collaboration hero scenario. It incorporates the subsequently confirmed standalone Rust/PostgreSQL/OpenSearch direction. v0.2 remains unchanged as the historical source. A deferred external-audit integration and project off-switch contract are captured in §31; they are outside this prototype phase.
 **Source:** The product-design conversation from which this document was requested. This is a proposed feature specification, **not** a statement of released AWS functionality or official AWS API contracts.
 
 > **Product promise:** Start a project in your coding agent, keep working normally, and let useful team knowledge accumulate—with clear visibility, personal privacy controls, evidence, and the ability to correct or retract what was learned.
+
+**Future extension:** [External audit and project off switch](#31-future-extension-external-organizational-audit-and-project-off-switch) — explicitly deferred.
 
 **New in v0.3:** [Board collaboration hero](#6b-second-hero-scenario-an-agent-team-builds-a-trustworthy-revenue-dataset) · [Board and subscription contract](#30-optional-project-board-and-live-session-subscriptions) · [New acceptance scenarios](#at-25--optional-board-and-one-note-identity)  
 
@@ -27,7 +29,7 @@ dependencies and session subscriptions are part of the non-formal-reasoning scop
 Existing `MEM-*` requirement IDs and AT-01–24 are retained for traceability; the
 `MEM` prefix is a historical identifier, not a second object type. New requirements
 use `BRD-*` and `SUB-*`. Proposed APIs use `context.notes.*` and `noteId` terminology.
-Existing implementation names such as `publish_memory`, `note_versions` and
+Existing implementation names such as `publish_memory`, `memory_versions` and
 `context.memories.*` require a compatibility/migration plan: accept documented
 legacy aliases during transition, return canonical note names with versioned
 schemas, and preserve object IDs, lineage, events and idempotency semantics.
@@ -2456,3 +2458,175 @@ schema migrations Night Shift may propose automatically. Measure these in the gy
 They do not justify omitting replay, authorization, stale-write protection, or
 capability disclosure. Beads-like task/dependency ergonomics are inspiration only:
 this spec does not adopt Beads' storage, protocol, compatibility, or execution model.
+
+## 31. Future extension: external organizational audit and project off switch
+
+**Status: Future capability, explicitly outside the current prototype phase.**
+This section captures the requested integration boundary. It does not add a hazard
+rule engine, export pipeline, or operational off switch to the current implementation
+or make them prerequisites for the board, notes, or subscriptions in §30.
+
+### 31.1 Purpose and responsibility boundary
+
+An organization may operate an external service that applies company-, organization-,
+or team-wide rules to agent behavior: hazards, prohibited activity, emerging risks,
+and situations requiring human attention. Spindle can supply authorized observations
+and project knowledge to that service. Defining and evaluating those organizational
+rules, correlating activity across other systems, and deciding incident policy are
+responsibilities of the external analysis service, not the Spindle note engine.
+
+The future Spindle-side scope is:
+
+1. Publish policy-authorized agent traces, notes, board contents, and relevant
+   lifecycle/activity events to a configured external audit/analysis destination.
+2. Expose an authorized project suspension operation—the “big red button”—that
+   disables agent access and interaction with that project's context.
+3. Optionally deliver a stop-request message to the project's active agent sessions
+   through the harness, recording actual delivery and any supported cancellation.
+
+These capabilities must also work for projects with the board disabled. Export of
+permitted general agent context is possible through the same adapter pattern, but
+has its own explicit scope and authority; project membership alone cannot authorize
+export of unrelated context or organization-wide data. Organization-wide shutdown
+or killing arbitrary external tools/processes is not implied by a project off switch.
+
+### 31.2 Policy-authorized audit export
+
+A configured integration may publish initial authorized snapshots followed by
+versioned changes, and/or permitted session trajectory records. Potential records
+include observable agent/tool actions and outcomes; note creation, revisions,
+lineage, time and lifecycle; board placements, attributes, tags and dependencies;
+subscription delivery/handling observations; and project control actions.
+
+Export configuration must distinguish metadata-only, filtered content and explicitly
+authorized trace export. **Shared-note access never grants raw-transcript access.**
+Personal exclusions, source permissions, tenant boundaries, retention and destination
+policy still apply. Board attributes, paths and tags can contain sensitive material
+and require the same filtering as note text. Never export credentials or request
+hidden model reasoning. Explain what is sent, why, to which destination, and under
+which policy; this is not an implicit consequence of enabling a board.
+
+Proposed event envelope: stable event ID, schema version, tenant/context/project
+scope, authorized actor/session identifiers, observation and recording times,
+object/version references, event type, provenance/correlation IDs and the policy
+version applied to the payload. Payloads can contain permitted content or bounded,
+authenticated references. References must not confer broader read access than the
+integration's grant. Export enough context to interpret an action without claiming
+that an observed tool call proves intent, a hazard, or successful execution.
+
+Use durable outbox delivery, idempotent event IDs, bounded retries, checkpoints and
+explicit retention gaps/resynchronization. A receiver acknowledgment means receipt,
+not analysis completion or a clean bill of health. Surface outages, incomplete
+coverage and any configured backpressure. Record provenance and export/control
+history with integrity protection appropriate to the future deployment; do not claim
+an ordinary mutable database is an independently tamper-proof organizational log.
+
+Corrections, retractions and privacy purges produce downstream change/deletion
+requests under the agreed destination contract. Track destination acknowledgment
+and retention limitations. Spindle cannot guarantee erasure of already exported
+copies or compliance by an external service it does not control. Any future legal
+retention policy conflicting with personal deletion needs an explicit product and
+governance decision; audit integration is not a silent override of current privacy.
+
+### 31.3 Project suspension contract
+
+Proposed operation: `context.projects.suspend(projectId, reason, requestId,
+expectedControlRevision, notifySessions)`. The initial authority model should use
+an explicitly granted project or organizational incident-control capability, with
+audited actor identity and least privilege. Neither ordinary note text, a model's
+inference, nor an incoming unverified hazard event can grant this capability.
+An external service may call the operation only through a separately delegated,
+authenticated control integration. A finding notification alone is advisory.
+
+Suspension is a durable project control state, distinct from board disablement,
+archival, source retraction or content deletion. The suspension commit advances a
+control generation and establishes an enforcement boundary. From that boundary:
+
+- Deny ordinary agent retrieval, search, listing, inspection, graph expansion and
+  note/board interaction for the project. Blended/general-context queries must also
+  exclude that project's content; selecting another search mode is not a bypass.
+- Deny new captures/publications, session activation and other agent mutations for
+  that project. Fence in-flight writes and workers so a stale generation cannot
+  publish, renew work claims or resume project processing after suspension.
+- Stop normal subscription dispatch and cancel queued content-bearing delivery.
+  Invalidate project grants/caches as needed; a previously issued session token or
+  pagination cursor cannot bypass the current control state.
+- Pause or cancel normal project background jobs, including Night Shift and new
+  derivation/index-publication work. Expose any in-flight cleanup or enforcement
+  failures; do not claim all processes stopped merely because a status row changed.
+
+The authoritative access/publication checks must enforce suspension even if a
+notification, index update, or external analysis service is unavailable. Define and
+test admission, response-release and publication fences so requests racing the
+control change cannot silently bypass it. Content already released to an agent
+before suspension cannot be recalled by the service.
+
+Authorized control/status, incident review, required privacy remediation and
+explicitly configured audit export are separate restricted operations, not general
+agent access exceptions. An organization may need audit delivery to continue during
+an incident; that exception must be explicitly scoped and observable. Preserve
+project data and evidence by default. Suspension itself is not a purge or a promise
+that the external agent's local files, prior context, or credentials are erased.
+
+### 31.4 Optional stop message and harness cancellation
+
+If requested, send a minimal project-control message to affected active sessions:
+
+> “This project has been suspended. Stop work associated with this project and
+> await an authorized resumption. Project context access is disabled.”
+
+This uses a dedicated authenticated control path, independent of ordinary note
+subscriptions, so sessions without a board watch can receive it. Suppress normal
+content notifications while allowing this narrowly scoped control message. Any
+operator-supplied explanation is sanitized and treated as data, not arbitrary
+instructions or tool commands. Do not disclose sensitive audit findings to an
+otherwise unauthorized session.
+
+Record distinct outcomes: control state enforced by Spindle, stop message queued,
+harness receipt, injection at a supported boundary, agent acknowledgment, and
+cancellation/termination confirmed where the harness supports it. Deduplicate
+retries by control event ID and session. Offline, expired or unsupported sessions
+remain explicitly unconfirmed; do not report them as stopped.
+
+A cooperative steering message cannot guarantee that an agent stops computing,
+writing local files, making unrelated API calls or using information it already
+retrieved. Actual cancellation requires a supported, separately authorized harness
+or sandbox control operation. Do not claim ChatGPT, Codex, Claude Code/SDK, or NeMo
+supports any particular interruption capability until that integration is tested.
+Spindle's project-access denial remains effective regardless of these outcomes.
+
+### 31.5 Recovery and operator visibility
+
+Provide a control receipt/status containing the project, control generation,
+authority, timestamp and safe reason reference; service enforcement status;
+background-work disposition; notification/cancellation outcomes per authorized
+session view; and unresolved coverage limitations. Duplicate suspension requests
+are idempotent and cannot accidentally resume the project.
+
+Resumption is a separate explicitly authorized and audited operation with an
+expected control revision. Revalidate memberships, credentials, pending jobs,
+leases and subscription state before allowing work to continue. Do not automatically
+restart stale queued mutations or resume agents just because an analyzer clears
+an alert or its connection recovers. A stale stop/resume request cannot overwrite a
+newer incident decision. Decide during future design which sessions may resume and
+which require fresh activation; disclose that policy to users.
+
+### 31.6 Future requirements and qualification scenarios
+
+All identifiers below are **deferred**, not current-phase acceptance gates.
+
+| ID | Future requirement | Qualification evidence |
+|---|---|---|
+| FUT-AUD-01 | Export authorized observable traces, notes and board state to an external analysis service. | Board-on/off and general-context scopes tested; metadata/content/trace grants are distinct. |
+| FUT-AUD-02 | Preserve privacy, version/provenance context and reliable delivery. | Exclusion and source-ACL tests; duplicate/replay/outage/gap cases; correction/deletion receipts and retention limitations. |
+| FUT-AUD-03 | Keep hazard rules and organization-level analysis external. | External findings carry correlation/policy references but cannot execute project control without a delegated capability. |
+| FUT-CTL-01 | Enforce durable project suspension independently of notifications. | Direct/blended search, board tools, existing tokens, pending pages and cached paths cannot disclose suspended project content. |
+| FUT-CTL-02 | Fence concurrent agent and background work. | Suspension racing ingestion, synthesis, claims, Night Shift and dispatch rejects stale-generation publication and reports remaining work. |
+| FUT-CTL-03 | Optionally request agent stop through supported harness control. | No-board/no-subscription sessions included; offline, unsupported, injected, acknowledged and actually cancelled outcomes remain distinct. |
+| FUT-CTL-04 | Provide restricted incident status and explicit safe resumption. | Duplicate/stale stop/resume requests, control authorization, audit continuity and reactivation tests pass without replaying stale mutations. |
+
+Future sizing decisions include event schema/destination protocols, trace granularity,
+export retention and backpressure policy, incident-control roles and delegated
+trust, measurable enforcement latency, harness interruption capabilities and any
+organization-wide control aggregation. Capture these when scheduling this extension;
+do not add an organizational rule engine or a working kill switch to this phase.

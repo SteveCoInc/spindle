@@ -47,3 +47,10 @@ service while introducing a versioned naming migration and the optional board.
 | T024 | Hierarchy/tag listing, blueprint/custom attributes, valid time, typed dependencies and concurrent edits/claims | AT-26–30, AT-35–36 |
 | T025 | Durable session subscriptions and actual host steering/fallback | AT-31–39, including snapshot/replay and membership revocation |
 | T026 | Data-project collaboration gym and Night Shift board maintenance | AT-37, AT-40; external dataset grading and matched comparison arms |
+
+## Future backlog — not scheduled in this phase
+
+External audit export and project off-switch integration are captured in v0.3 §31
+(FUT-AUD-01–03, FUT-CTL-01–04). Organizational hazard-rule evaluation belongs to the
+external service. Do not add this extension to the active board/subscription tasks;
+implementation needs a future scheduling decision and qualified control interfaces.
