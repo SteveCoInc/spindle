@@ -23,3 +23,11 @@ available for this repository. Do not add a nonexistent AI-review check: protect
 CI review authentication is not configured yet. No schedule is necessary for the
 current explicit runner, and no automated merge should be enabled before its gates
 and review credentials are qualified.
+
+## Live NeMo episodes (implementation continues without these credentials)
+
+The pinned NeMo harness requires a configured sandbox-reachable Gym Model Server,
+a supported hosted-model credential and known pricing/usage limits. Repairing the
+interactive Codex login alone does not establish that transport. The qualification
+spike and remaining integration contract are in [gym-spike.md](gym-spike.md).
+Keep model keys in the environment secret manager. No paid episode has started.

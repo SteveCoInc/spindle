@@ -276,7 +276,7 @@ pub fn execute(token: &str, op: Operation) -> Result<Value> {
             if !text_ok(&query, 2000) {
                 return invalid();
             }
-            let response:Value=super::search()?.post(format!("{}/spindle-evidence-v1/_search",super::endpoint()))
+            let response:Value=super::search()?.post(format!("{}/{}/_search",super::endpoint(),super::index()))
                 .json(&json!({"size":100,"_source":false,"query":{"bool":{"must":[{"match":{"text":query}}],"filter":[{"term":{"project":project}}]}}}))
                 .send()?.error_for_status()?.json()?;
             let mut hits = Vec::new();
@@ -285,7 +285,13 @@ pub fn execute(token: &str, op: Operation) -> Result<Value> {
                 .ok_or_else(|| anyhow::anyhow!("invalid search response"))?
             {
                 if let Some(id) = hit["_id"].as_str() {
-                    let v = source(&mut tx, id, &who)?;
+                    let v = match source(&mut tx, id, &who) {
+                        Ok(value) => value,
+                        Err(e) if e.downcast_ref::<ApiError>().is_some_and(|e| e.0 == 403) => {
+                            continue;
+                        }
+                        Err(e) => return Err(e),
+                    };
                     if v["project"] == project && v["retracted"] == false {
                         hits.push(v)
                     }
@@ -328,7 +334,7 @@ pub fn execute(token: &str, op: Operation) -> Result<Value> {
 
 pub fn project_search() -> Result<usize> {
     let c = super::search()?;
-    let url = format!("{}/spindle-evidence-v1", super::endpoint());
+    let url = format!("{}/{}", super::endpoint(), super::index());
     let response=c.put(&url).json(&json!({"mappings":{"properties":{"project":{"type":"keyword"},"text":{"type":"text"}}}})).send()?;
     if !response.status().is_success() {
         let status = response.status();
@@ -383,6 +389,8 @@ pub fn integration() -> Result<()> {
         std::process::Command::new(std::env::current_exe()?)
             .arg("serve")
             .env("SPINDLE_BIND", address.to_string())
+            .env("SPINDLE_INDEX", super::index())
+            .env("SPINDLE_SCHEMA", super::schema())
             .stdout(std::process::Stdio::null())
             .spawn()?,
     );
@@ -582,9 +590,23 @@ pub fn integration() -> Result<()> {
         assert_eq!(call(1, query.clone())?["hits"][0]["id"], id);
         assert!(call(2, query.clone()).is_err());
         call(
+            1,
+            json!({"op":"activate","workspace":"member-repo","project":p}),
+        )?;
+        let member_session =
+            call(1, json!({"op":"start_session","workspace":"member-repo"}))?["session"]
+                .as_str()
+                .unwrap()
+                .to_owned();
+        call(
+            1,
+            json!({"op":"capture","session":member_session,"request_key":"allowed","text":"Member-authored note"}),
+        )?;
+        call(
             0,
             json!({"op":"remove_member","project":p,"principal":users[1]}),
         )?;
+        assert!(call(1,json!({"op":"capture","session":member_session,"request_key":"revoked","text":"No longer authorized"})).is_err());
         assert!(call(1, query.clone()).is_err());
         call(
             0,
@@ -635,6 +657,78 @@ pub fn integration() -> Result<()> {
             call(1, json!({"op":"inspect","evidence":id}))?["text"],
             Value::Null
         );
+        // The integration command owns a unique index, so loss/rebuild does not
+        // delete developer data or race another run's search collection.
+        super::search()?
+            .delete(format!("{}/{}", super::endpoint(), super::index()))
+            .send()?
+            .error_for_status()?;
+        rebuild()?;
+        let restored = call(
+            1,
+            json!({"op":"search","project":p,"query":"Corrected retention"}),
+        )?;
+        assert!(
+            restored["hits"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .any(|v| v["id"] == corrected)
+        );
+        assert_eq!(
+            call(1, json!({"op":"search","project":p,"query":"idempotency"}))?["hits"],
+            json!([])
+        );
+        // Exercise independent database connections; the HTTP server itself is
+        // serial today, but the future worker/API boundary must also be race-safe.
+        call(0, json!({"op":"activate","workspace":"race","project":p}))?;
+        let race_session = call(0, json!({"op":"start_session","workspace":"race"}))?["session"]
+            .as_str()
+            .unwrap()
+            .to_owned();
+        let race_source=call(0,json!({"op":"capture","session":race_session,"request_key":"race","text":"Race source"}))?["evidence"].as_str().unwrap().to_owned();
+        let barrier = std::sync::Arc::new(std::sync::Barrier::new(2));
+        let token = tokens[0].clone();
+        let guard = barrier.clone();
+        let project = p.clone();
+        let publisher = std::thread::spawn(move || {
+            guard.wait();
+            execute(
+                &token,
+                Operation::PublishMemory {
+                    request_key: "race-memory".into(),
+                    project,
+                    text: "Racing synthesis".into(),
+                    inputs: vec![race_source],
+                },
+            )
+        });
+        let token = tokens[0].clone();
+        let retracter = std::thread::spawn(move || {
+            barrier.wait();
+            execute(
+                &token,
+                Operation::Retract {
+                    session: race_session,
+                },
+            )
+        });
+        let published = publisher.join().expect("publisher panicked");
+        retracter.join().expect("retracter panicked")?;
+        if let Err(ref error) = published {
+            anyhow::ensure!(
+                error.downcast_ref::<ApiError>().is_some_and(|e| e.0 == 409),
+                "unexpected publication failure: {error:#}"
+            );
+        }
+        if let Ok(value) = published {
+            let memory = value["memory"].as_str().unwrap();
+            assert_eq!(
+                call(0, json!({"op":"inspect","evidence":memory}))?["retracted"],
+                true
+            );
+        }
+        project_search()?;
         Ok(())
     })();
     // Cleanup follows returned errors; failed assertions retain diagnostic state.
@@ -644,8 +738,9 @@ pub fn integration() -> Result<()> {
             let id: String = r.get(0);
             super::search()?
                 .delete(format!(
-                    "{}/spindle-evidence-v1/_doc/{id}?refresh=true",
-                    super::endpoint()
+                    "{}/{}/_doc/{id}?refresh=true",
+                    super::endpoint(),
+                    super::index()
                 ))
                 .send()?;
         }
@@ -657,8 +752,9 @@ pub fn integration() -> Result<()> {
             let id: String = r.get(0);
             super::search()?
                 .delete(format!(
-                    "{}/spindle-evidence-v1/_doc/{id}?refresh=true",
-                    super::endpoint()
+                    "{}/{}/_doc/{id}?refresh=true",
+                    super::endpoint(),
+                    super::index()
                 ))
                 .send()?;
             db.execute("DELETE FROM search_outbox WHERE evidence_id=$1", &[&id])?;
@@ -718,6 +814,23 @@ pub(crate) fn check_privacy(
         return Err(ApiError(422, "privacy_exclusion").into());
     }
     Ok((personal_version, project_version))
+}
+
+pub fn rebuild() -> Result<()> {
+    let mut db = super::database()?;
+    let mut tx = db.transaction()?;
+    tx.batch_execute("LOCK TABLE memberships IN SHARE ROW EXCLUSIVE MODE")?;
+    tx.execute(
+        "INSERT INTO search_outbox SELECT id FROM evidence ON CONFLICT DO NOTHING",
+        &[],
+    )?;
+    tx.execute(
+        "INSERT INTO memory_outbox SELECT id FROM memory_versions ON CONFLICT DO NOTHING",
+        &[],
+    )?;
+    tx.commit()?;
+    while project_search()? > 0 {}
+    Ok(())
 }
 
 #[cfg(test)]

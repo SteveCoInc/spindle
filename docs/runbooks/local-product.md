@@ -94,3 +94,19 @@ external force` lock errors, preserve it. The current development session uses
 `SPINDLE_STACK=spindle-current` with fresh volumes; old `spindle-dev` volumes remain.
 Set that variable before Make lifecycle commands in this session. This workaround
 is not a validated backup/restore procedure and does not silently recover old data.
+
+## Projection recovery and test isolation
+
+`make rebuild-search` requeues canonical sources and memory versions and drains the
+outboxes. It reconstructs active documents and deletes retired ones. Model calls
+are not needed. Use it after restoring PostgreSQL into a fresh OpenSearch instance.
+It rebuilds the configured index; backup consistency and production restore remain
+separate qualification work.
+
+The integration command creates its own PostgreSQL schema and OpenSearch index,
+passes those namespaces to its HTTP subprocess, and removes them after success.
+Its outbox drains and index-loss tests therefore cannot consume development events
+or delete development documents. Concurrent runs use different namespaces. A hard
+process kill or assertion failure may retain diagnostic state; do not indiscriminately
+delete schemas/indices from another active run. Development defaults remain
+`public` and `spindle-evidence-v1`.

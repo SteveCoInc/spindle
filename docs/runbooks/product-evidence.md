@@ -40,3 +40,10 @@ The attempted independent reviewer reached Codex but failed on an invalid saved
 login (401/refresh rejected). It did not approve this implementation. The next
 manual authentication step is recorded in [manual actions](manual-actions.md).
 GitHub API works and draft PR #1 is open. No change has been merged or deployed.
+
+Subsequent recovery/concurrency checks passed: two full acceptance processes ran
+concurrently with separate schemas/indices; lost-index reconstruction preserved
+active corrected memory and did not resurrect retired sources; independent database
+connections raced synthesis publication with retraction and never left an active
+unsupported output. Revoked membership also rejected writes through an already
+bound session. The NeMo framework spike is recorded separately in [gym-spike.md](gym-spike.md).

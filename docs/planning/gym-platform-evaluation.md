@@ -1,6 +1,8 @@
 # NeMo Gym and Daytona evaluation
 
-Status: source/documentation assessment, not an executed integration or benchmark.
+Status: upstream contract tests and a two-persona local Docker diagnostic have
+now run; see [executed spike evidence](../runbooks/gym-spike.md). Live model/product
+episodes and Daytona remain unrun.
 The initial proposal did not evaluate these tools. The revised recommendation is
 to qualify **NeMo Gym as the evaluation foundation, local Docker as the default
 sandbox provider, and Daytona as an optional remote provider**. Build the Spindle
@@ -107,6 +109,6 @@ ceiling, terminate agent execution at the deadline, and use an external TTL/jani
 to remove leaked sandboxes after a controller crash. Log cleanup failures as
 incomplete; a killed local process does not stop remote billing.
 
-No NeMo install, live agent run, Daytona allocation or AWS deployment was performed
-for this assessment. The next evidence is the qualification spike, not a claim
-that the combination is already working.
+The subsequent spike installed the pinned external runtime and qualified selected
+upstream contracts plus local Docker lifecycle/isolation. This is partial platform
+evidence, not a complete Spindle gym or live-agent quality result.

@@ -101,7 +101,7 @@ pub fn project() -> Result<usize> {
         &[],
     )?;
     let c = super::search()?;
-    let url = format!("{}/spindle-evidence-v1", super::endpoint());
+    let url = format!("{}/{}", super::endpoint(), super::index());
     for row in &rows {
         let id: String = row.get(0);
         let mut tx = db.transaction()?;

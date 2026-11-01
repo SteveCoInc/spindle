@@ -5,7 +5,7 @@ COMPOSE := docker compose -p $(or $(SPINDLE_STACK),spindle-dev) -f infra/compose
 FACTORY := $(CARGO) run --quiet --locked -p spindle-factory --
 .PHONY: help bootstrap check test up down migrate doctor test-integration serve qualify review factory-status factory-pause factory-resume
 help:
-	@echo 'bootstrap check test up down migrate doctor test-integration serve qualify review factory-status factory-pause factory-resume'
+	@echo 'bootstrap check test up down migrate doctor test-integration serve worker project rebuild-search mcp qualify review factory-status factory-pause factory-resume gym-bootstrap gym-contracts'
 bootstrap:
 	$(CARGO) fetch --locked
 check:
@@ -24,7 +24,7 @@ migrate:
 doctor:
 	$(FACTORY) doctor
 	$(CARGO) run --quiet --locked -p spindle-api -- check
-test-integration: migrate
+test-integration:
 	$(CARGO) run --quiet --locked -p spindle-api -- integration
 serve:
 	$(CARGO) run --quiet --locked -p spindle-api -- serve
@@ -46,3 +46,21 @@ project:
 	$(CARGO) run --quiet --locked -p spindle-api -- project
 mcp:
 	$(CARGO) run --quiet --locked -p spindle-api -- mcp
+
+# Optional external framework spike. No model calls or Daytona resources.
+NEMO_GYM_DIR ?= $(CURDIR)/.factory/vendor/nemo-gym
+NEMO_GYM_REV := 0c7ac5119c99e0aa0dfeda7be59157c589680ffd
+UV ?= uv
+.PHONY: gym-bootstrap gym-contracts
+gym-bootstrap:
+	@test -d "$(NEMO_GYM_DIR)/.git" || git clone --no-checkout https://github.com/NVIDIA-NeMo/Gym.git "$(NEMO_GYM_DIR)"
+	git -C "$(NEMO_GYM_DIR)" checkout --detach $(NEMO_GYM_REV)
+	cd "$(NEMO_GYM_DIR)" && $(UV) sync --frozen --extra dev --no-default-groups --system-certs
+gym-contracts:
+	@test "$$(git -C "$(NEMO_GYM_DIR)" rev-parse HEAD)" = "$(NEMO_GYM_REV)"
+	mkdir -p "$(CURDIR)/artifacts/gym"
+	cd "$(NEMO_GYM_DIR)" && .venv/bin/python -m pytest responses_api_agents/codex_agent/tests/test_exec_transport.py responses_api_agents/codex_agent/tests/test_sandbox_sessions.py responses_api_agents/codex_agent/tests/test_sandbox_runner.py responses_api_agents/codex_agent/tests/test_bootstrap.py --junitxml="$(CURDIR)/artifacts/gym/nemo-contracts.xml"
+
+.PHONY: rebuild-search
+rebuild-search:
+	$(CARGO) run --quiet --locked -p spindle-api -- rebuild-search

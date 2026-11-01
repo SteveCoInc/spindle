@@ -15,6 +15,7 @@ fn database() -> Result<Client> {
         bail!("foundation profile requires loopback PostgreSQL; remote TLS adapter is not implemented")
     }
     config.connect_timeout(Duration::from_secs(5));
+    config.options(&format!("-c search_path={}", schema()));
     config
         .connect(NoTls)
         .context("PostgreSQL unavailable (local development profile)")
@@ -37,6 +38,40 @@ fn search() -> Result<reqwest::blocking::Client> {
 }
 fn endpoint() -> String {
     env::var("OPENSEARCH_URL").unwrap_or_else(|_| "http://127.0.0.1:9200".into())
+}
+fn schema() -> &'static str {
+    static SCHEMA: std::sync::OnceLock<String> = std::sync::OnceLock::new();
+    SCHEMA.get_or_init(|| {
+        if env::args().nth(1).as_deref() == Some("integration") {
+            format!("spindle_test_{}", uuid::Uuid::new_v4().simple())
+        } else {
+            env::var("SPINDLE_SCHEMA").unwrap_or_else(|_| "public".into())
+        }
+    })
+}
+fn migrate() -> Result<()> {
+    let mut db = database()?;
+    for sql in [
+        include_str!("../../../migrations/0001_foundation.sql"),
+        include_str!("../../../migrations/0002_product.sql"),
+        include_str!("../../../migrations/0003_privacy.sql"),
+        include_str!("../../../migrations/0004_lineage.sql"),
+        include_str!("../../../migrations/0005_memory_idempotency.sql"),
+        include_str!("../../../migrations/0006_corrections.sql"),
+    ] {
+        db.batch_execute(sql)?;
+    }
+    Ok(())
+}
+fn index() -> &'static str {
+    static INDEX: std::sync::OnceLock<String> = std::sync::OnceLock::new();
+    INDEX.get_or_init(|| {
+        if env::args().nth(1).as_deref() == Some("integration") {
+            format!("spindle-evidence-test-{}", uuid::Uuid::new_v4())
+        } else {
+            env::var("SPINDLE_INDEX").unwrap_or_else(|_| "spindle-evidence-v1".into())
+        }
+    })
 }
 fn ready() -> Result<()> {
     let row = database()?.query_one(
@@ -103,16 +138,26 @@ fn integration() -> Result<()> {
     Ok(())
 }
 fn main() -> Result<()> {
+    if schema().is_empty()
+        || schema().len() > 63
+        || !schema()
+            .bytes()
+            .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'_')
+    {
+        bail!("invalid SPINDLE_SCHEMA")
+    }
+
+    if !index().starts_with("spindle-evidence-")
+        || index().len() > 200
+        || !index()
+            .bytes()
+            .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'-')
+    {
+        bail!("SPINDLE_INDEX must be a lowercase spindle-evidence- index name")
+    }
     match env::args().nth(1).as_deref() {
         Some("migrate") => {
-            database()?.batch_execute(include_str!("../../../migrations/0001_foundation.sql"))?;
-            database()?.batch_execute(include_str!("../../../migrations/0002_product.sql"))?;
-            database()?.batch_execute(include_str!("../../../migrations/0003_privacy.sql"))?;
-            database()?.batch_execute(include_str!("../../../migrations/0004_lineage.sql"))?;
-            database()?.batch_execute(include_str!(
-                "../../../migrations/0005_memory_idempotency.sql"
-            ))?;
-            database()?.batch_execute(include_str!("../../../migrations/0006_corrections.sql"))?;
+            migrate()?;
             println!("migrations 1–6 applied");
         }
         Some("check") => {
@@ -120,9 +165,18 @@ fn main() -> Result<()> {
             println!("storage ready");
         }
         Some("integration") => {
-            ready()?;
-            integration()?;
-            product::integration()?;
+            // Unique schema and index isolate all fixtures, outboxes and rebuilds
+            // from developer data and concurrent qualification attempts.
+            database()?.batch_execute(&format!("CREATE SCHEMA {}", schema()))?;
+            let result = (|| -> Result<()> {
+                migrate()?;
+                ready()?;
+                integration()?;
+                product::integration()?;
+                Ok(())
+            })();
+            database()?.batch_execute(&format!("DROP SCHEMA {} CASCADE", schema()))?;
+            result?;
         }
         Some("mcp") => mcp::serve()?,
         Some("request") => {
@@ -139,6 +193,10 @@ fn main() -> Result<()> {
         Some("provision") => {
             product::provision(&env::var("SPINDLE_PRINCIPAL")?, &env::var("SPINDLE_TOKEN")?)?;
             println!("principal provisioned");
+        }
+        Some("rebuild-search") => {
+            product::rebuild()?;
+            println!("canonical search projection rebuilt");
         }
         Some("project") => println!("projected {} sources", product::project_search()?),
         Some("serve") => {
