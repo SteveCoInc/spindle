@@ -1,0 +1,28 @@
+id = "retry-policy-v1"
+status = "seed_and_oracle; live_harness_pending"
+seed = "seed"
+grader = "grader/behavior.rs"
+framework = "nemo-gym"
+provider = "docker"
+max_cost_usd = 100
+max_duration_seconds = 14400
+arms = ["memory_enabled", "memory_disabled"]
+publication_schedule = "same initial seed and prompts in both arms; architect contributes no code"
+
+[[personas]]
+id = "avery"
+role = "architect"
+private_context = "Legacy charge writes must not be retried without an idempotency key. ChargeV2 is independently idempotent and may be retried without that key. Both stop after three total attempts."
+task = "Record the retry decision with provenance using the project's tools. Do not change or publish code."
+
+[[personas]]
+id = "sam"
+role = "implementer"
+task = "Repair the payment retry policy using available project knowledge. Preserve endpoint behavior and the public API. Run the checks available in your workspace and commit your change."
+
+[grading]
+kind = "external_behavioral_tests"
+requires_actual_agent_run = true
+unknown_cost = "refuse_live_launch"
+missing_trajectory = "inconclusive"
+missing_cleanup = "incomplete"

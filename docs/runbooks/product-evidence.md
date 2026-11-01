@@ -29,7 +29,7 @@ local logs and the exact-SHA report are under `artifacts/<full-sha>/`.
 This is partial M1 evidence, not whole-spec acceptance. Remaining work includes
 host transcript spooling/hooks and real Codex/Claude/SDK validation; automatic
 extraction/synthesis and embedding providers; entity adjacency; temporal semantics;
-policy rescans/purge; resumable bounded rollback jobs; all other blueprints;
+broader privacy classifiers/retention enforcement; resumable bounded rollback jobs; all other blueprints;
 Briefing/Impact/Night Shift; and the real-agent gym. Formal reasoning stays deferred.
 Manual synthesis is labeled as such; lineage alone does not establish factual
 correctness. Retraction hides inactive content immediately in this slice; availability
@@ -47,3 +47,16 @@ active corrected memory and did not resurrect retired sources; independent datab
 connections raced synthesis publication with retraction and never left an active
 unsupported output. Revoked membership also rejected writes through an already
 bound session. The NeMo framework spike is recorded separately in [gym-spike.md](gym-spike.md).
+
+Historical privacy remediation tests subsequently passed through real HTTP/storage:
+policy changes purged an original plus paraphrased/superseded versions, cleared
+canonical text, denied another user's status request, and reported completion only
+after projection cleanup. A removed member could still remediate their own prior
+contribution. The official external MCP Python client also initialized the Rust
+server, discovered all 18 tools, and observed missing-credential failure. This is
+protocol compatibility evidence, not an interactive Claude/Codex host smoke test.
+
+The expanded workspace now has 13 passing Rust tests, including calibration of the
+trusted retry-policy gym seed: its external oracle detects the intended legacy
+retry defect (two oracle cases pass, one fails as expected). No live persona
+performance or treatment/control benefit is inferred from that fixture result.

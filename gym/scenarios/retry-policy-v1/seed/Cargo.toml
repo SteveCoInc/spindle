@@ -1,0 +1,7 @@
+[package]
+name = "payments-retry-policy"
+version = "0.1.0"
+edition = "2024"
+
+# A standalone participant workspace, not part of Spindle's Cargo workspace.
+[workspace]

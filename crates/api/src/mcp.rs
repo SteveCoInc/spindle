@@ -5,6 +5,16 @@ use std::io::{BufRead, Write};
 
 const TOOLS: &[(&str, &str, &[&str])] = &[
     (
+        "rescan_privacy",
+        "Explicitly purge your excluded historical content and dependent prose; index cleanup is asynchronous",
+        &[],
+    ),
+    (
+        "privacy_run_status",
+        "Check completion of your privacy remediation projections",
+        &["run"],
+    ),
+    (
         "correct_memory",
         "Author replaces a memory from its original inputs and retires dependent outputs",
         &["memory", "request_key", "text"],
@@ -200,7 +210,7 @@ mod tests {
         );
         assert_eq!(r["result"]["protocolVersion"], "2025-03-26");
         let r = dispatch(&json!({"id":2,"method":"tools/list"}));
-        assert_eq!(r["result"]["tools"].as_array().unwrap().len(), 16);
+        assert_eq!(r["result"]["tools"].as_array().unwrap().len(), 18);
         let r = dispatch(&json!({"id":3,"method":"tools/call","params":{"name":"shell"}}));
         assert_eq!(r["error"]["code"], -32602);
     }

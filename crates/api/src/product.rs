@@ -36,6 +36,10 @@ pub fn provision(id: &str, token: &str) -> Result<()> {
 #[derive(Deserialize)]
 #[serde(tag = "op", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Operation {
+    RescanPrivacy {},
+    PrivacyRunStatus {
+        run: String,
+    },
     CorrectMemory {
         memory: String,
         request_key: String,
@@ -138,6 +142,18 @@ pub fn execute(token: &str, op: Operation) -> Result<Value> {
     // changes. Replace with scoped guards after measured concurrency requirements.
     tx.batch_execute("LOCK TABLE memberships IN SHARE ROW EXCLUSIVE MODE")?;
     let result = match op {
+        Operation::RescanPrivacy {} => super::lineage::rescan(&mut tx, &who)?,
+        Operation::PrivacyRunStatus { run } => {
+            let roots: Vec<String> = tx
+                .query_opt(
+                    "SELECT roots FROM privacy_runs WHERE id=$1 AND principal_id=$2",
+                    &[&run, &who],
+                )?
+                .ok_or(ApiError(403, "forbidden"))?
+                .get(0);
+            super::lineage::reconcile_roots(&mut tx, roots)?
+        }
+
         Operation::CorrectMemory {
             memory,
             request_key,
@@ -300,14 +316,14 @@ pub fn execute(token: &str, op: Operation) -> Result<Value> {
             json!({"hits":hits,"mode":"lexical","limit":100})
         }
         Operation::Retract { session } => {
-            let project: String = tx
+            let _project: String = tx
                 .query_opt(
                     "SELECT project_id FROM sessions WHERE id=$1 AND principal_id=$2",
                     &[&session, &who],
                 )?
                 .ok_or(ApiError(403, "forbidden"))?
                 .get(0);
-            member(&mut tx, &project, &who, false)?;
+
             tx.execute(
                 "UPDATE sessions SET retracted=TRUE WHERE id=$1",
                 &[&session],
@@ -609,6 +625,20 @@ pub fn integration() -> Result<()> {
         assert!(call(1,json!({"op":"capture","session":member_session,"request_key":"revoked","text":"No longer authorized"})).is_err());
         assert!(call(1, query.clone()).is_err());
         call(
+            1,
+            json!({"op":"personal_privacy","terms":["Member-authored"]}),
+        )?;
+        let revoked_remediation = call(1, json!({"op":"rescan_privacy"}))?;
+        assert_eq!(revoked_remediation["affected_artifacts"], 1);
+        project_search()?;
+        assert_eq!(
+            call(
+                1,
+                json!({"op":"privacy_run_status","run":revoked_remediation["run"]})
+            )?["status"],
+            "complete"
+        );
+        call(
             0,
             json!({"op":"add_member","project":p,"principal":users[1]}),
         )?;
@@ -678,6 +708,55 @@ pub fn integration() -> Result<()> {
         assert_eq!(
             call(1, json!({"op":"search","project":p,"query":"idempotency"}))?["hits"],
             json!([])
+        );
+        call(
+            0,
+            json!({"op":"activate","workspace":"privacy","project":p}),
+        )?;
+        let privacy_session =
+            call(0, json!({"op":"start_session","workspace":"privacy"}))?["session"]
+                .as_str()
+                .unwrap()
+                .to_owned();
+        let secret=call(0,json!({"op":"capture","session":privacy_session,"request_key":"prior-policy","text":"late-secret-marker"}))?["evidence"].as_str().unwrap().to_owned();
+        let paraphrase=call(0,json!({"op":"publish_memory","request_key":"paraphrase","project":p,"text":"A paraphrase without the literal marker","inputs":[secret]}))?["memory"].as_str().unwrap().to_owned();
+        let replacement=call(0,json!({"op":"correct_memory","request_key":"paraphrase-fix","memory":paraphrase,"text":"Corrected paraphrase without the literal marker"}))?["memory"].as_str().unwrap().to_owned();
+        project_search()?;
+        call(
+            0,
+            json!({"op":"personal_privacy","terms":["private-value","late-secret-marker"]}),
+        )?;
+        let remediation = call(0, json!({"op":"rescan_privacy"}))?;
+        assert_eq!(remediation["affected_artifacts"], 3);
+        let run = remediation["run"].as_str().unwrap();
+        assert!(call(1, json!({"op":"privacy_run_status","run":run})).is_err());
+        assert_eq!(
+            call(0, json!({"op":"privacy_run_status","run":run}))?["status"],
+            "projection_pending"
+        );
+        assert_eq!(
+            call(1, json!({"op":"inspect","evidence":replacement}))?["retracted"],
+            true
+        );
+        let mut verify = super::database()?;
+        assert_eq!(
+            verify
+                .query_one("SELECT text FROM evidence WHERE id=$1", &[&secret])?
+                .get::<_, String>(0),
+            ""
+        );
+        for id in [paraphrase, replacement] {
+            assert_eq!(
+                verify
+                    .query_one("SELECT text FROM memory_versions WHERE id=$1", &[&id])?
+                    .get::<_, String>(0),
+                ""
+            );
+        }
+        project_search()?;
+        assert_eq!(
+            call(0, json!({"op":"privacy_run_status","run":run}))?["status"],
+            "complete"
         );
         // Exercise independent database connections; the HTTP server itself is
         // serial today, but the future worker/API boundary must also be race-safe.
@@ -771,6 +850,7 @@ pub fn integration() -> Result<()> {
             "DELETE FROM personal_exclusions WHERE principal_id=$1",
             &[&u],
         )?;
+        db.execute("DELETE FROM privacy_runs WHERE principal_id=$1", &[&u])?;
         db.execute("DELETE FROM principals WHERE id=$1", &[&u])?;
     }
     result?;

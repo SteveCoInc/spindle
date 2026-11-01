@@ -58,6 +58,7 @@ fn migrate() -> Result<()> {
         include_str!("../../../migrations/0004_lineage.sql"),
         include_str!("../../../migrations/0005_memory_idempotency.sql"),
         include_str!("../../../migrations/0006_corrections.sql"),
+        include_str!("../../../migrations/0007_privacy_runs.sql"),
     ] {
         db.batch_execute(sql)?;
     }
@@ -75,7 +76,7 @@ fn index() -> &'static str {
 }
 fn ready() -> Result<()> {
     let row = database()?.query_one(
-        "SELECT version FROM spindle_schema_migrations WHERE version = 6",
+        "SELECT version FROM spindle_schema_migrations WHERE version = 7",
         &[],
     )?;
     let _: i64 = row.get(0);
@@ -158,7 +159,7 @@ fn main() -> Result<()> {
     match env::args().nth(1).as_deref() {
         Some("migrate") => {
             migrate()?;
-            println!("migrations 1–6 applied");
+            println!("migrations 1–7 applied");
         }
         Some("check") => {
             ready()?;

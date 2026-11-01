@@ -5,7 +5,8 @@ retrieve it across teammates' sessions, and correct or retract it with evidence.
 
 **Status: factory foundation and first local product slice implemented.** The Rust
 service supports authenticated projects, membership, snapshotted session bindings,
-explicit evidence capture, privacy exclusions, scoped lexical search, versioned
+explicit evidence capture, privacy exclusions and historical remediation, scoped
+lexical search, versioned
 manually authored synthesis, author corrections and transitive retraction. A shared
 stdio MCP interface exposes these tools to coding hosts. Automatic transcript
 capture, automatic extraction/synthesis, resumable rollback jobs and the live gym remain in
@@ -44,7 +45,7 @@ Start with [the delivery plan](docs/planning/plan.md), then read:
 
 The selected product stack is **Rust + PostgreSQL + OpenSearch**. Lineage and
 entity links use PostgreSQL tables; dedicated graph engines wait until formal
-reasoning. Aurora DSQL is a candidate AWS store to qualify later. The recommended
+reasoning. Aurora DSQL is a candidate AWS store to qualify later. The locally spiked
 gym foundation is [NeMo Gym with local Docker and optional Daytona](docs/planning/gym-platform-evaluation.md),
 subject to the integration spike.
 

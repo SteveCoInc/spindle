@@ -133,16 +133,19 @@ pub fn reconcile(db: &mut impl GenericClient, session: &str, who: &str) -> Resul
             &[&session, &who],
         )?
         .ok_or(ApiError(403, "forbidden"))?;
-    let project: String = row.get(0);
-    member(db, &project, who, false)?;
+    let _project: String = row.get(0);
     if !row.get::<_, bool>(1) {
         bail!(ApiError(409, "session_not_retracted"))
     }
-    let mut queue: VecDeque<String> = db
+    let roots: Vec<String> = db
         .query("SELECT id FROM evidence WHERE session_id=$1", &[&session])?
         .into_iter()
         .map(|r| r.get(0))
         .collect();
+    reconcile_roots(db, roots)
+}
+pub fn reconcile_roots(db: &mut impl GenericClient, roots: Vec<String>) -> Result<Value> {
+    let mut queue: VecDeque<String> = roots.into();
     let mut seen = BTreeSet::new();
     let mut pending = 0;
     while let Some(id) = queue.pop_front() {
@@ -215,4 +218,68 @@ pub fn correct(
     result["descendants_retired"] = json!(invalidate(db, vec![id.to_owned()])?);
     result["supersedes"] = json!(id);
     Ok(result)
+}
+
+/// Explicit personal-policy remediation, including contributions in projects the
+/// author has left. Metadata remains; active content and derived prose are purged.
+pub fn rescan(db: &mut impl GenericClient, who: &str) -> Result<Value> {
+    let mut roots = Vec::<String>::new();
+    let rows=db.query("SELECT e.id,e.text,s.project_id FROM evidence e JOIN sessions s ON s.id=e.session_id WHERE s.principal_id=$1 UNION ALL SELECT id,text,project_id FROM memory_versions WHERE author=$1", &[&who])?;
+    for row in rows {
+        let id: String = row.get(0);
+        let text: String = row.get(1);
+        let project: String = row.get(2);
+        match super::product::check_privacy(db, &project, who, &text) {
+            Ok(_) => {}
+            Err(e) if e.downcast_ref::<ApiError>().is_some_and(|e| e.0 == 422) => roots.push(id),
+            Err(e) => return Err(e),
+        }
+    }
+    let mut queue: VecDeque<String> = roots.clone().into();
+    let mut seen = BTreeSet::new();
+    while let Some(id) = queue.pop_front() {
+        if !seen.insert(id.clone()) {
+            continue;
+        }
+        if db.execute(
+            "UPDATE evidence SET retracted=TRUE,text='' WHERE id=$1",
+            &[&id],
+        )? > 0
+        {
+            db.execute(
+                "INSERT INTO search_outbox VALUES($1) ON CONFLICT DO NOTHING",
+                &[&id],
+            )?;
+        } else {
+            db.execute(
+                "UPDATE memory_versions SET active=FALSE,text='' WHERE id=$1",
+                &[&id],
+            )?;
+            db.execute(
+                "INSERT INTO memory_outbox VALUES($1) ON CONFLICT DO NOTHING",
+                &[&id],
+            )?;
+        }
+        for row in db.query(
+            "SELECT memory_id FROM memory_inputs WHERE input_id=$1",
+            &[&id],
+        )? {
+            queue.push_back(row.get(0));
+        }
+        // A corrected replacement uses the same old inputs but may paraphrase
+        // private text. Include supersession history in privacy remediation.
+        for row in db.query("SELECT id FROM memory_versions WHERE supersedes=$1", &[&id])? {
+            queue.push_back(row.get(0));
+        }
+    }
+    let id = uuid::Uuid::new_v4().to_string();
+    // Save the entire affected set so status includes supersession-only links.
+    let affected: Vec<String> = seen.into_iter().collect();
+    db.execute(
+        "INSERT INTO privacy_runs(id,principal_id,roots) VALUES($1,$2,$3)",
+        &[&id, &who, &affected],
+    )?;
+    Ok(
+        json!({"run":id,"status":if affected.is_empty(){"complete"}else{"projection_pending"},"affected_artifacts":affected.len(),"canonical_content_purged":true,"backup_erasure_verified":false}),
+    )
 }

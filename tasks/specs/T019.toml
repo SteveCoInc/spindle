@@ -1,0 +1,8 @@
+id = "T019"
+title = "Qualify NeMo and first real Codex episode"
+status = "blocked"
+dependencies = []
+requirements = ["EXT-04", "EXT-11"]
+acceptance = ["Pinned external NeMo contract suites pass", "Two local Docker personas isolate files and clean up", "Trusted retry-policy seed defect is detected by external oracle", "Real Codex personas use Spindle and retain observable trajectories", "Known model costs and runtime bounds enforced"]
+scope = ["gym/", "crates/", "docs/", "tasks/", "Makefile", "Cargo.toml", "Cargo.lock"]
+prompt = "The framework suites, Docker diagnostic and Rust seed/oracle calibration have passed; do not repeat them as claims of live quality. Continue from docs/runbooks/gym-spike.md. Live execution needs a qualified hosted model-server profile and credentials; the saved interactive Codex login also needs repair. Preserve the $100/four-hour ceiling and do not launch with unknown cost accounting."

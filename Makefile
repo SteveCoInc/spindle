@@ -64,3 +64,7 @@ gym-contracts:
 .PHONY: rebuild-search
 rebuild-search:
 	$(CARGO) run --quiet --locked -p spindle-api -- rebuild-search
+
+.PHONY: gym-baseline
+gym-baseline:
+	$(CARGO) test --locked -p spindle-factory --test gym_seed

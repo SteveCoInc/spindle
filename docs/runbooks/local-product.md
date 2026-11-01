@@ -2,7 +2,7 @@
 
 This slice shares explicitly supplied original evidence and manually authored
 synthesis with immutable lineage. Automatic LLM extraction/synthesis, semantic
-embeddings, historical privacy rescans and resumable large rollback jobs remain
+embeddings, resumable large rollback jobs remain
 unfinished. Search uses lexical OpenSearch retrieval. The Software blueprint is an identity/version marker;
 its extraction policies are not implemented yet.
 
@@ -67,7 +67,7 @@ Both apply before capture and synthesis storage; project policy cannot relax a
 personal exclusion. Matching contributions are rejected whole with HTTP 422.
 Policies are versioned; source evidence records applied versions. Changes apply
 only to future submissions. These are literal filters, not a complete secret/PII
-classifier, Unicode-confusable defense or retrospective deletion workflow.
+classifier or Unicode-confusable defense.
 
 `publish_memory` takes `project`, `request_key`, `text`, and `inputs` (evidence or
 memory IDs). Every input must be active and belong to that project. All inputs
@@ -110,3 +110,19 @@ or delete development documents. Concurrent runs use different namespaces. A har
 process kill or assertion failure may retain diagnostic state; do not indiscriminately
 delete schemas/indices from another active run. Development defaults remain
 `public` and `spindle-evidence-v1`.
+
+## Historical privacy remediation
+
+After updating exclusions, explicitly invoke `rescan_privacy`. It applies current
+personal and project policies to your historical sources and authored memories,
+even in projects where membership was revoked. Matching originals and transitive
+derived/superseded prose are cleared from canonical content columns and retired.
+The operation returns a run ID; `privacy_run_status` with `run` reports completion
+after queued index deletions finish. Other users cannot read that job status.
+
+Metadata and lineage remain for auditing. This is application-level content purge;
+physical PostgreSQL WAL, prior backups, external exports and provider retention are
+not claimed erased. No raw transcript store exists yet. Ordinary retraction still
+retains historical text; explicit privacy remediation has the stronger behavior.
+Authors may retract their own sessions after membership removal, but cannot use old
+sessions to write or regain project retrieval access.
