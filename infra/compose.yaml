@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:17.7
+    image: postgres:17.7@sha256:2006493727bd5277eece187319af1ef82b4cf82cf4fc1ed00da0775b646ac2a4
     environment:
       POSTGRES_DB: spindle
       POSTGRES_USER: spindle
@@ -15,7 +15,7 @@ services:
       timeout: 3s
       retries: 30
   opensearch:
-    image: opensearchproject/opensearch:2.19.4
+    image: opensearchproject/opensearch:2.19.4@sha256:9e0b3b3b6805811bd63d9b9503ffe34a58ba33d03cc346000e318c6ff5c05bd9
     environment:
       discovery.type: single-node
       DISABLE_INSTALL_DEMO_CONFIG: "true"
