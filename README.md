@@ -3,9 +3,26 @@
 Shared, traceable project memory for coding agents: capture useful knowledge,
 retrieve it across teammates' sessions, and correct or retract it with evidence.
 
-**Status: design proposal, not a runnable application.** The repository currently
-contains the source specification and a proposed implementation plan. No service,
-plugin, gym, CI gate, or deployment has been implemented or validated yet.
+**Status: M0 foundation implemented; local verification in progress.** The Rust
+workspace includes a foundation HTTP service, PostgreSQL migration, OpenSearch
+smoke check, TOML task validator, durable claim ledger, isolated task runner,
+clean-commit qualification and structured Codex reviewer. Product memory features
+and the NeMo gym are still planned.
+
+Start development with [the local runbook](docs/runbooks/local-development.md)
+and operate the [initial factory](docs/runbooks/factory.md). With Rust 1.93.0,
+Docker Compose, Git and Make installed:
+
+```sh
+make bootstrap
+make up
+make check test test-integration
+make serve
+```
+
+CI definitions cover Rust and storage checks. Independent review requires a
+working Codex login and network access. The runner does not yet dispatch on a
+schedule or merge changes automatically.
 
 Start with [the delivery plan](docs/planning/plan.md), then read:
 
@@ -29,5 +46,5 @@ The proposed order is factory foundation → usable local product → first real
 gym → complete non-formal-reasoning features → AWS → optional formal reasoning.
 The gym and factory are development infrastructure; the product remains agent-native.
 
-New Codex sessions should read [AGENTS.md](AGENTS.md). Commands described in the
-plans are future interfaces, not currently executable instructions.
+New Codex sessions should read [AGENTS.md](AGENTS.md). The runbooks describe implemented commands; commands appearing only in planning
+documents may still be future interfaces.

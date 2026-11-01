@@ -1,0 +1,7 @@
+/target/
+/.factory/
+/artifacts/
+.env
+*.db
+*.db-shm
+*.db-wal

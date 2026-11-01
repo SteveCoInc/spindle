@@ -1,0 +1,11 @@
+CREATE TABLE IF NOT EXISTS spindle_schema_migrations (
+    version BIGINT PRIMARY KEY,
+    applied_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS context_instances (
+    id UUID PRIMARY KEY,
+    tenant_id UUID NOT NULL,
+    name TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+INSERT INTO spindle_schema_migrations (version) VALUES (1) ON CONFLICT DO NOTHING;

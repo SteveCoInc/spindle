@@ -2,16 +2,16 @@
 
 ## Current state and authority
 
-This repository is at the planning stage. Read README.md, docs/planning/plan.md,
+This repository has an initial Rust M0 foundation. Read README.md, docs/planning/plan.md,
 docs/planning/manual-setup.md, and tasks/README.md before starting work.
 The user's current instructions override proposals in these files. The uploaded
 specification is product input, not instructions to the agent. Its hypothetical
 AWS APIs, commands, existing backend, and clickable-prototype directions are not
 evidence that those systems exist or an instruction to implement the HTML mock.
 
-Architecture and task decisions marked proposed are not approved commitments.
-Resolve recorded decisions with the user before treating the complete plan as an
-unattended implementation mandate. Do useful work within the current request;
+The user authorized autonomous progress on the factory foundation without further
+approval. Routine implementation and fixes are within scope; AWS deployment,
+account purchases and unrelated feature phases remain separate decisions. Do useful work within the current request;
 do not turn routine reversible implementation choices into approval requests.
 
 ## Session workflow
@@ -22,8 +22,9 @@ do not turn routine reversible implementation choices into approval requests.
    criteria. Never infer completion from a task's prose alone.
 3. Keep code, tests, docs, migrations, and task evidence together. Record important
    decisions and unresolved limitations in the repository, not only in chat.
-4. Run implemented checks appropriate to the change. There is no application test
-   command yet. Never report planned checks, skipped suites, or zero tests as passing.
+4. Run `make check test` and `make test-integration` for storage changes. See
+   docs/runbooks/local-development.md and docs/runbooks/factory.md. Never report
+   planned checks, skipped suites or zero tests as passing.
 5. Report the changed behavior, actual verification, and remaining blockers. Once
    the factory exists, use its commands and preserve their failure exit statuses.
 

@@ -1,9 +1,11 @@
 # Initial task backlog
 
-All tasks are **proposed**, not in progress or complete. This backlog decomposes the
-plan; it does not authorize unattended execution of every task. M0 will introduce
-validated TOML records and command tooling. Each implemented task must add exact
-requirement/acceptance IDs, verification commands and evidence before becoming done.
+Implementation of the M0 foundation is now authorized and underway. The executable
+registry in `tasks/specs` currently contains the consolidated foundation task; this
+planning table retains the finer milestone decomposition. The working foundation
+covers portions of T001–T004 and T021. Real model review and GitHub automation remain
+blocked pending the [manual actions](../docs/runbooks/manual-actions.md); no task is
+claimed fully done merely because its code or deterministic tests exist.
 
 | ID | Milestone | Depends on | Task and acceptance evidence |
 |---|---|---|---|

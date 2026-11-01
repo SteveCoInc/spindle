@@ -1,0 +1,36 @@
+services:
+  postgres:
+    image: postgres:17.7
+    environment:
+      POSTGRES_DB: spindle
+      POSTGRES_USER: spindle
+      POSTGRES_PASSWORD: local-development-only
+    ports:
+      - "127.0.0.1:${SPINDLE_PG_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U spindle -d spindle"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+  opensearch:
+    image: opensearchproject/opensearch:2.19.4
+    environment:
+      discovery.type: single-node
+      DISABLE_INSTALL_DEMO_CONFIG: "true"
+      DISABLE_SECURITY_PLUGIN: "true"
+      OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
+      bootstrap.memory_lock: "false"
+    ports:
+      - "127.0.0.1:${SPINDLE_SEARCH_PORT:-9200}:9200"
+    volumes:
+      - search-data:/usr/share/opensearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:9200/_cluster/health >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+volumes:
+  postgres-data:
+  search-data:
