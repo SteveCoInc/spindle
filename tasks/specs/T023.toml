@@ -1,0 +1,8 @@
+id = "T023"
+title = "Adopt notes and optional unified project board"
+status = "proposed"
+dependencies = []
+requirements = ["BRD-01", "BRD-08", "BRD-10"]
+acceptance = ["AT-25: board-off workflows remain usable and placement retains note identity", "Legacy API aliases, IDs, idempotency and lineage survive migration"]
+scope = ["crates/", "migrations/", "integrations/", "gym/", "docs/", "tasks/", "Makefile", "Cargo.toml", "Cargo.lock", "README.md", "AGENTS.md"]
+prompt = "Implement v0.3 naming compatibility and board lifecycle. Read sections 29–30; this is newly specified work, not an already implemented feature."

@@ -35,3 +35,15 @@ task is claimed fully done merely because code or deterministic tests exist.
 T002 can use provisional adapter configurations established by T001; the factory
 should not wait for every future AWS decision. T005–T009 should be integrated in
 small slices rather than developed as isolated subsystems that only meet at the end.
+
+## v0.3 board and note follow-up
+
+These are newly specified work, not completed capabilities. Preserve the existing
+service while introducing a versioned naming migration and the optional board.
+
+| ID | Work | Acceptance |
+|---|---|---|
+| T023 | Adopt note terminology with API/storage compatibility; unified optional board identity and lifecycle | AT-25; legacy IDs/retries/lineage preserved |
+| T024 | Hierarchy/tag listing, blueprint/custom attributes, valid time, typed dependencies and concurrent edits/claims | AT-26–30, AT-35–36 |
+| T025 | Durable session subscriptions and actual host steering/fallback | AT-31–39, including snapshot/replay and membership revocation |
+| T026 | Data-project collaboration gym and Night Shift board maintenance | AT-37, AT-40; external dataset grading and matched comparison arms |

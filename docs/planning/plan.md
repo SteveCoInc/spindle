@@ -1,7 +1,7 @@
 # Proposed delivery plan
 
-This is a proposal based on the uploaded v0.2 spec and the user's subsequent
-request. It is not a claim that any milestone has shipped. The [source spec](../specs/project-spindle-spec-v0.2.md)
+This plan follows the [v0.3 specification](../specs/project-spindle-spec-v0.3.md),
+including notes, an optional project board, and active-session change subscriptions. It is not a claim that any milestone has shipped. The [source spec](../specs/project-spindle-spec-v0.2.md)
 is retained unchanged. The user confirmed a standalone product: the spec's assumed
 existing Context backend does not exist here. Build a local Context instance and
 general-context support as part of Spindle.
@@ -60,3 +60,24 @@ the [platform spike](gym-platform-evaluation.md). Both hosts in M1, Codex gym fi
 hosted model calls and a $100/four-hour full-run ceiling remain confirmed.
 Estimate calendar time only after M0's integration/storage spikes; host capture and
 rollback correctness are the main early uncertainties.
+
+## v0.3 scope addition: notes, board and subscriptions
+
+Use **notes** as the product noun; preserve legacy implementation names until a
+qualified compatibility migration. The uploaded v0.2 remains unchanged. The board
+is optional and organizes the same extracted/authored/derived notes. Its attributes
+may follow a blueprint schema or use flexible custom fields. Schema validation
+and board dependencies do not introduce formal reasoning.
+
+Add board enable/disable, hierarchy/tag listing, typed attributes, valid-time and
+revision-checked mutations to the local product track. Add a transactional event
+stream, session-scoped selectors, replay and explicit polling before qualifying
+actual Codex/Claude steering hooks. Keep operational dependencies separate from
+content derivation. Do not claim host injection from an MCP-only test.
+
+Extend the gym with the v0.3 data-project hero (§6B): ingestion, transform and
+validation agents coordinate milestones, pending work and insights through notes.
+Hold ordinary note retrieval and code publication constant for board-enabled vs
+board-disabled comparisons; optionally ablate notifications. Existing retry-policy
+scenarios remain useful. New BRD/SUB requirements and AT-25–40 are specified, not
+implemented or verified by the current service's prior tests. See tasks T023–T026.

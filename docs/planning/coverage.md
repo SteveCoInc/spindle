@@ -145,3 +145,18 @@ the tested scope. Semantic quality targets need pilot calibration, labeled data
 and uncertainty estimates; absence of a detected leak is not proof of universal
 semantic non-leakage. Every report separates passed, failed, skipped, unrun and
 inconclusive outcomes.
+
+## v0.3 additions — specified, not implemented
+
+The current [v0.3 specification](../specs/project-spindle-spec-v0.3.md) adopts notes
+as the shared noun while retaining historical `MEM-*` identifiers. It adds:
+
+| Requirements | Planned verification | Tasks |
+|---|---|---|
+| BRD-01–BRD-08, BRD-10 | AT-25–30, AT-35–36: optionality, unified identity, folders/tags, ontology/custom fields, time, dependency semantics, permissions and concurrency | T023, T024 |
+| BRD-09, BRD-11 | AT-30, AT-37: claim fencing and policy-safe Night Shift | T024, T026 |
+| SUB-01–SUB-10 | AT-31–39: selectors, atomic event recording, replay, revocation, lifecycle, steering and fallback | T025 |
+| BRD-12 | AT-40: real data-project episode and matched board/notification comparison | T026 |
+
+Prior memory-service or MCP tests do not establish this new board/subscription
+coverage. The task definitions distinguish implementation from real-host acceptance.

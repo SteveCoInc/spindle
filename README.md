@@ -41,7 +41,8 @@ Start with [the delivery plan](docs/planning/plan.md), then read:
 - [Manual setup and outstanding decisions](docs/planning/manual-setup.md)
 - [Research and references](docs/planning/references.md)
 - [Initial task backlog](tasks/README.md)
-- [Original product specification](docs/specs/project-spindle-spec-v0.2.md)
+- [Current product specification v0.3: notes, optional board, subscriptions](docs/specs/project-spindle-spec-v0.3.md)
+- [Original v0.2 specification (unchanged)](docs/specs/project-spindle-spec-v0.2.md)
 
 The selected product stack is **Rust + PostgreSQL + OpenSearch**. Lineage and
 entity links use PostgreSQL tables; dedicated graph engines wait until formal

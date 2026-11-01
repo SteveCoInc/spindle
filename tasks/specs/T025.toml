@@ -1,0 +1,8 @@
+id = "T025"
+title = "Deliver session subscriptions through qualified harness hooks"
+status = "proposed"
+dependencies = ["T024"]
+requirements = ["SUB-01", "SUB-02", "SUB-03", "SUB-04", "SUB-05", "SUB-06", "SUB-07", "SUB-08", "SUB-09", "SUB-10"]
+acceptance = ["AT-31–39: explicit selectors, gap-free snapshots, replay, lifecycle and authorization", "Test real supported Codex and Claude Code/SDK steering boundaries separately from MCP discovery"]
+scope = ["crates/", "migrations/", "integrations/", "gym/", "docs/", "tasks/", "Makefile", "Cargo.toml", "Cargo.lock", "README.md", "AGENTS.md"]
+prompt = "Implement durable events and session-scoped subscriptions from v0.3 section 30. State host delivery capabilities honestly; retain a polling fallback and never inject note data as privileged instructions."
