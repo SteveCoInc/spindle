@@ -31,6 +31,10 @@ customer web console or clickable HTML mock is required by this request.
 | M6 — Formal reasoning (separate phase) | Typed claims; RDF mapping; reevaluate Cypher/SPARQL and dedicated graph engines; external validator/reasoner; alternate justifications; reasoning evaluations | AT-21–24 plus privacy, rule-version, scope/time, independent-support, and cross-representation retraction tests |
 
 M0 should stay small. Do not build an elaborate scheduling platform before M1.
+Use [the orchestration comparison](factory-orchestration.md) to qualify Codex's
+execution interface and a thin single-coordinator loop. Durable claims, isolated
+attempts and review/merge admission are prerequisites for three/four workers, not
+a reason to build a general swarm dashboard before the first product slice.
 Develop deterministic scenarios with M1; M2 adds real agents rather than replacing
 the tests. M1 includes full rollback before allowing multi-source synthesis to be
 called usable. M3 completes the requested prototype breadth. M4 determines whether

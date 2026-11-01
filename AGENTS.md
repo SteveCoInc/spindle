@@ -27,6 +27,13 @@ do not turn routine reversible implementation choices into approval requests.
 5. Report the changed behavior, actual verification, and remaining blockers. Once
    the factory exists, use its commands and preserve their failure exit statuses.
 
+When assigned through the implemented factory, preserve its task/attempt identity
+and lease. Do not claim another worker's task by editing Markdown, share writable
+test state, merge outside the queue, or accept stale completion after reassignment.
+The [orchestration proposal](docs/planning/factory-orchestration.md) distinguishes
+account identities, worker slots and native sub-agents. It does not by itself
+authorize spawning agents or purchasing/rotating accounts in a session.
+
 ## Design invariants
 
 - Enforce identity and authorization server-side. Shared memory is distinct from

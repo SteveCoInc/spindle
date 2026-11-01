@@ -11,6 +11,7 @@ Start with [the delivery plan](docs/planning/plan.md), then read:
 
 - [Architecture and storage choices](docs/planning/architecture.md)
 - [Codex software factory](docs/planning/software-factory.md)
+- [Parallel Codex workers and orchestration options](docs/planning/factory-orchestration.md)
 - [Evaluation gym](docs/planning/gym.md)
 - [Requirements and acceptance coverage](docs/planning/coverage.md)
 - [Manual setup and outstanding decisions](docs/planning/manual-setup.md)

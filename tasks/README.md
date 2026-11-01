@@ -27,6 +27,8 @@ requirement/acceptance IDs, verification commands and evidence before becoming d
 | T018 | M6 | T016 | Formal-reasoning plan, reevaluate Cypher/SPARQL and dedicated graph engines; no engine work until requirements and justification tests are adopted |
 | T019 | M0 | T002 | NeMo/Docker framework spike on upstream fixtures; qualify Codex/Claude protocol boundaries and Rust integration feasibility. Product-backed multi-session/capture/grading/cleanup acceptance belongs to T010/T011 after T009 |
 | T020 | M2 optional | T010, T011 | Qualify Daytona on a small scenario: authenticated network access, persona isolation, artifact export, aggregate cost and confirmed remote cleanup |
+| T021 | M0 | T003 | Compare/adapt Codex CLI/app-server and Symphony/Agent Orchestrator patterns; implement thin Rust coordinator boundary with Git tasks, durable claims/fencing and independent worker identities; no dashboard/platform rewrite |
+| T022 | Before 3–4 workers | T004, T021 | Qualify isolated workers and test resources, capacity/backoff, crash/restart/stale-lease recovery, protected merge admission and throughput metrics on a disposable repo; operator verifies subscription entitlement separately |
 
 T002 can use provisional adapter configurations established by T001; the factory
 should not wait for every future AWS decision. T005–T009 should be integrated in

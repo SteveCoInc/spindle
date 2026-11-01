@@ -127,6 +127,7 @@ M1 is not the same as implementing them.
 | EXT-10 | Actual AWS adapter conformance, including DSQL if selected, identity and restore/teardown verification | M5 |
 | EXT-11 | Rust application/factory/gym-owned code; external framework runtime boundary explicit | M0 onward |
 | EXT-12 | NeMo/Docker and optional Daytona qualification: shared project lifecycle, capture, isolated grading, cleanup and total cost | M0 spike / M2 acceptance |
+| EXT-13 | Multi-worker factory: atomic claims, isolation, fencing/recovery, bounded account capacity, independent review and one merge path | M0 foundation; qualification before 3–4 workers |
 
 ## Test layers
 

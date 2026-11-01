@@ -1,5 +1,11 @@
 # Proposed Codex software factory
 
+For the researched alternatives, worker/account model, recovery and qualification
+plan, read [factory orchestration](factory-orchestration.md). The recommendation is
+one coordinator, isolated task workers, independent checks and one merge path;
+bounded native sub-agents are a tool within that structure. Multiple accounts are
+optional capacity providers, not independent authorities over the backlog.
+
 ## Repository as the durable workspace
 
 Commit specs, decisions, tasks, code, migrations, prompts, tool contracts, sanitized
@@ -38,11 +44,20 @@ explicit amendment; retain the supplied artifact unchanged.
 
 Implement a validated TOML task format in M0. Required fields: ID, title, status,
 dependencies, scope/non-goals, requirement IDs, acceptance scenarios, permitted
-paths, verification commands, risk, owner/lease, evidence references and blockers.
+paths/read-write footprint, verification commands, risk, owner role, evidence
+references and blockers. Runtime attempt/worker IDs, leases, heartbeats and fencing
+tokens live in the coordinator's durable ledger, not in competing task-file edits.
 States: proposed → ready → in_progress → review → done, plus blocked. `done`
 requires machine evidence, not an agent's assertion. Generate the human backlog
 from the same records once the task tooling exists. A dependency cycle or a task
 with no acceptance criterion must fail validation.
+
+Commit task definitions and terminal evidence/status receipts. Treat in-progress
+Git status as a snapshot; the coordinator is authoritative for active claims.
+Avoid a second independently edited backlog in an external tracker. Schedule small
+tasks with clear acceptance evidence and establish shared interfaces before parallel
+implementation. Serialize high-conflict files such as Cargo.lock, migrations and
+common contracts unless the tasks have an explicit compatible integration plan.
 
 The user's speech about "last-commit-based code", TOML, branches, PRs and queues is
 interpreted here as small task branches, structured task configuration, and checks
@@ -67,6 +82,9 @@ work, preserve failure exit status, print its scope, and record tests run/skippe
 | `make review TASK=…` | Reviewer runner against exact SHA, base spec and collected test evidence |
 | `make pr TASK=…` | Verify evidence still matches HEAD, then submit branch/PR when authorized |
 | `make queue-status` | Show failed/stale checks, merge-group state and precise recovery action |
+| `make factory-status` | Task claims, worker/auth health, observed capacity, budgets and review/merge pressure |
+| `make factory-pause` | Stop new dispatch while preserving or safely checkpointing active attempts |
+| `make factory-reconcile` | Reconcile workers, leases, branches and PRs; reject stale completion before reassignment |
 | `make gym-smoke` | Fast deterministic scenario through production paths |
 | `make gym-live SCENARIO=…` | Qualified NeMo harness; Docker default, optional Daytona; aggregate spend/time ceilings |
 | `make gym-report RUN=…` | Artifacts, outcomes, failure attribution and comparison with baseline |
@@ -84,8 +102,9 @@ introduces a known failure in a disposable fixture and proves the gate rejects i
 
 ## Build, review, and merge loop
 
-1. Select a ready task; establish a small branch and expected base SHA. Record
-   ownership through a task update/central scheduler lease if several workers run.
+1. Atomically claim a ready task and reserve capacity through the single coordinator.
+   Establish an isolated checkout, unique test resources, task/attempt branch,
+   expected base SHA and fencing token. An edit to a task file is not a lock.
 2. Implement code and meaningful tests. The implementer may run fast incremental
    checks, but authoritative qualification uses committed inputs in a clean checkout.
 3. Produce an evidence manifest: source/base SHA, lockfile/tool versions, required
@@ -108,9 +127,24 @@ same supported runner interface as gym agents, but separate credentials, permiss
 and prompts. Reviewer timeout/unavailability is not approval. Budget consumption
 must be reported separately from gym experiment costs.
 
+Do not couple factory execution to NeMo's evaluation lifecycle: use the supported
+Codex CLI/app-server adapter for development tasks, and reuse only suitable protocol
+or artifact contracts. A separate model account is optional for review; evidence,
+permissions and independent context establish its role. Model accounts and GitHub
+actors are separate identities. Agent review is a check with evidence, not a way
+to manufacture an independent human PR approval.
+
 Keep the default workflow fast: changed-component checks locally, complete relevant
 integration/acceptance checks in CI, expensive repeated gym experiments on schedule
 or deliberate qualification. Do not make every documentation PR spend $100.
+
+For three worker lanes, start with two builders and one reviewer. For four, add a
+third builder only after queue latency/conflicts justify it. The coordinator is
+ordinary deterministic software. Bound nested sub-agent concurrency too. Reserve
+review/CI capacity, stop dispatch under backlog pressure, and distinguish code
+defects from infrastructure failures, blocked permissions and account exhaustion.
+Qualify restart, crash, stale-lease and duplicate-task behavior before unattended
+multi-host operation. Track accepted tasks per hour and rework, not worker count.
 
 ## Gates agents cannot quietly weaken
 

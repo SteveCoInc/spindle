@@ -83,6 +83,38 @@ references but could not be fetched from this environment.
    unattended live evaluations. Configure a daily aggregate ceiling too: a per-run
    cap alone does not limit unlimited repeated runs.
 
+## Before enabling three or four factory workers
+
+1. First qualify concurrent workers using the current supported entitlement. Model
+   accounts are not worker-count licenses. Check current Codex plan/seat terms and
+   limits before buying multiple subscriptions; compare supported extra capacity,
+   appropriate team seats and API-funded automation. This environment could not
+   fetch the current pricing/auth pages and does not establish pooling eligibility.
+2. In the implemented worker configuration, register non-secret aliases, machines,
+   runtime versions, capabilities and concurrency limits. Each worker uses its own
+   supported authenticated OS/container credential store; keep credentials out of
+   Git, prompts and other workers. Verify account/workspace and auth health without
+   printing tokens. Document reauthentication and per-worker pause/resume steps.
+3. Set the coordinator's initial lanes to two builders and one reviewer. Use one
+   writable checkout per attempt and unique ports, Compose project names, test
+   databases/indices and writable artifacts. A fourth lane is an additional builder,
+   subject to review/merge capacity. Existing isolated cloud tasks need no extra
+   worktree; local factory worktree mode must be explicitly enabled and qualified.
+4. Configure separate factory per-task and daily budgets; the gym's $100/four-hour
+   cap is not a factory budget. Track observed quota/reset signals, unknown states,
+   nested sub-agents, timeouts and backoff. Never swap a running worker's login.
+5. Run the factory qualification suite against a disposable repository: duplicate
+   claims, shared-file contention, worker/coordinator crash, lost heartbeat, stale
+   completion, auth expiry, rate limit, merge conflict and failing required check.
+   Require preserved work, bounded retries and no bypassed gates before automation.
+6. Keep the GitHub authority separate: a model login is not a GitHub approver. Use
+   trusted status checks for agent reviews and real independent review where branch
+   rules require it. Measure accepted-task throughput, rework, queue time and spend
+   before purchasing or enabling more worker capacity.
+
+These are preparation/qualification steps, not commands that exist today. See
+[factory orchestration](factory-orchestration.md) for the research and failure model.
+
 ## Optional Daytona profile: after local gym qualification
 
 1. Select the Daytona organization and region permitted for synthetic test projects.
