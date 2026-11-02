@@ -3,7 +3,48 @@
 Research date: 2026-11-01 America/Los_Angeles. Recommendation only: no schedule,
 paid execution, secrets, GitHub App or external host was configured by this research.
 
-## Decision
+## Updated recommendation: use the existing Pro subscription
+
+The user prioritizes existing Pro capacity over separately billed API inference.
+For that constraint, prefer **Codex CLI signed in with ChatGPT on a persistent,
+user-controlled machine, supervised by a qualified Symphony deployment with its
+GitHub Issues adapter**. GitHub retains CI and the native merge queue. Use existing
+Rust helpers for repo task eligibility and evidence; avoid writing a second general
+scheduler. Symphony is an engineering preview, so first qualify one task and recovery
+before increasing concurrency. Its GitHub tracker must respect repository TOML
+eligibility rather than dispatch every open issue or treating the phase tracker as work.
+
+The current official Codex README explicitly recommends Sign in with ChatGPT to
+use Codex as part of Pro and other listed plans. This confirms subscription-backed
+CLI login, not unlimited throughput, pooled subscriptions or an unattended-use SLA.
+The official plan-limit and automation web pages remained inaccessible from this
+workspace; current detailed limits/terms were not independently verified.
+
+Start with one worker under the user's existing account. Keep authentication on its
+host using the supported login flow. Back off on rate/usage limits, pause on auth
+failure, preserve checkpoints, and do not automatically fall back to API billing or
+rotate accounts. CI/test/queue polling uses no model capacity; reserve Codex for
+implementation, bounded repair and substantive review. Reauthentication can still
+occasionally be needed; do not promise permanent unattended login.
+
+An existing always-on desktop or small dedicated Linux host is preferable to adding
+another managed service initially. Model inference is remote; the host needs capacity
+for Rust builds and optional local PostgreSQL/OpenSearch. GitHub-hosted CI can retain
+full storage qualification. An always-on host is required for this selected persistent
+service design, not for all possible factory designs. Do not export this ChatGPT cloud
+workspace's managed credentials to the host or GitHub secrets. The observed nested
+CLI 401 in this workspace does not establish that normal Pro CLI login on that host
+will fail.
+
+Suggested pilot: install pinned Codex and Symphony; complete supported ChatGPT login
+on that host; configure narrow GitHub access and repo-owned workflow; allow one ready
+task; verify PR, CI, queue, receipt and next-task pickup; test usage-limit pause and
+restart recovery. No new API key or API billing is part of this recommendation.
+No software was deployed and no subscription worker was started by this research.
+
+Source: [official Codex README](https://github.com/openai/codex#using-codex-with-your-chatgpt-plan).
+
+## Earlier API-backed alternative
 
 Start with GitHub-hosted Actions and the official openai/codex-action, a dedicated
 OpenAI API credential and a repository-scoped GitHub App. Use one builder initially.
