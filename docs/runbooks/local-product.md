@@ -126,3 +126,21 @@ not claimed erased. No raw transcript store exists yet. Ordinary retraction stil
 retains historical text; explicit privacy remediation has the stronger behavior.
 Authors may retract their own sessions after membership removal, but cannot use old
 sessions to write or regain project retrieval access.
+
+## Note terminology compatibility (first v0.3 migration slice)
+
+New clients can use `publish_note` with `project`, `request_key`, `text`, and
+`inputs`, and `correct_note` with `note`, `request_key`, and `text`. Both return
+`note` as the resulting object ID. MCP exposes `spindle_publish_note` and
+`spindle_correct_note` with those same fields.
+
+The existing `publish_memory` and `correct_memory` operations remain available
+and keep their existing `memory` response field (`correct_memory` also accepts the
+existing `memory` input field). They share authorization, privacy, idempotency keys,
+transactions, storage and lineage with the note-named operations. A request retried
+under either spelling returns the same object ID; changing content under the same
+key still conflicts. Mixed `note`/`memory` correction fields are rejected.
+
+This is an additive wire-name migration only. Existing IDs, database tables,
+inspection/search kinds and retraction counters are unchanged. Board lifecycle,
+hierarchy, attributes and subscriptions remain subsequent T023–T026 work.

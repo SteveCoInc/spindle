@@ -6,3 +6,7 @@ requirements = ["BRD-01", "BRD-08", "BRD-10"]
 acceptance = ["AT-25: board-off workflows remain usable and placement retains note identity", "Legacy API aliases, IDs, idempotency and lineage survive migration"]
 scope = ["crates/", "migrations/", "integrations/", "gym/", "docs/", "tasks/", "Makefile", "Cargo.toml", "Cargo.lock", "README.md", "AGENTS.md"]
 prompt = "Implement v0.3 naming compatibility and board lifecycle. Read sections 29–30; this is newly specified work, not an already implemented feature."
+
+# First slice implements publish_note/correct_note aliases with preserved legacy
+# responses, shared idempotency and unchanged storage/lineage. Board lifecycle and
+# the remainder of the naming migration are still proposed, not complete.
