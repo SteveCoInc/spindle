@@ -1,0 +1,11 @@
+# Advisory until a distinct automation identity and required owner review exist.
+# The current integration acts as steveash; GitHub does not allow self-approval.
+/.github/ @steveash
+/AGENTS.md @steveash
+/Makefile @steveash
+/rust-toolchain.toml @steveash
+/Cargo.toml @steveash
+/Cargo.lock @steveash
+/crates/factory/ @steveash
+/gym/ @steveash
+/docs/specs/ @steveash

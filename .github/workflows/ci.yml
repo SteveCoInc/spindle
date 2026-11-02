@@ -1,14 +1,16 @@
 name: CI
 on:
   push:
+    branches: [main]
   pull_request:
   merge_group:
+    types: [checks_requested]
   workflow_dispatch:
 permissions:
   contents: read
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name != 'merge_group' }}
 jobs:
   checks:
     name: Rust checks and tests
@@ -16,6 +18,8 @@ jobs:
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
       - name: Install pinned Rust
         run: rustup toolchain install 1.93.0 --profile minimal --component rustfmt --component clippy
       - run: make bootstrap check test
@@ -25,6 +29,8 @@ jobs:
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
       - name: Install pinned Rust
         run: rustup toolchain install 1.93.0 --profile minimal
       - run: make up test-integration

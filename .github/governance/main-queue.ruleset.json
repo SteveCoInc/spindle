@@ -1,0 +1,64 @@
+{
+  "name": "Spindle main admission",
+  "target": "branch",
+  "enforcement": "active",
+  "bypass_actors": [],
+  "conditions": {
+    "ref_name": {
+      "include": [
+        "~DEFAULT_BRANCH"
+      ],
+      "exclude": []
+    }
+  },
+  "rules": [
+    {
+      "type": "deletion"
+    },
+    {
+      "type": "non_fast_forward"
+    },
+    {
+      "type": "required_linear_history"
+    },
+    {
+      "type": "pull_request",
+      "parameters": {
+        "dismiss_stale_reviews_on_push": true,
+        "require_code_owner_review": false,
+        "require_last_push_approval": false,
+        "required_approving_review_count": 0,
+        "required_review_thread_resolution": true
+      }
+    },
+    {
+      "type": "required_status_checks",
+      "parameters": {
+        "required_status_checks": [
+          {
+            "context": "Rust checks and tests",
+            "integration_id": 15368
+          },
+          {
+            "context": "Storage integration",
+            "integration_id": 15368
+          }
+        ],
+        "strict_required_status_checks_policy": false,
+        "do_not_enforce_on_create": false
+      }
+    },
+    {
+      "type": "merge_queue",
+      "parameters": {
+        "check_response_timeout_minutes": 45,
+        "grouping_strategy": "ALLGREEN",
+        "max_entries_to_build": 2,
+        "max_entries_to_merge": 1,
+        "merge_method": "SQUASH",
+        "min_entries_to_merge": 1,
+        "min_entries_to_merge_wait_minutes": 0
+      }
+    }
+  ]
+}

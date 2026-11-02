@@ -27,15 +27,13 @@ must retain the agreed budgets. No credential or billing change is required mere
 to continue this chat's development work. Do not paste credentials into chat or Git.
 No further network change is indicated for the observed ChatGPT 401 failure.
 
-## GitHub controls, after first remote CI run
+## GitHub controls after organization transfer
 
-The workflow defines `Rust checks and tests` and `Storage integration`. Once they
-have actually appeared and passed on the PR, add them to the default branch's
-required checks in Settings → Rules → Rulesets. Enable merge-queue integration if
-available for this repository. Do not add a nonexistent AI-review check: protected
-CI review authentication is not configured yet. No schedule is necessary for the
-current explicit runner, and no automated merge should be enabled before its gates
-and review credentials are qualified.
+The repository is now `SteveCoInc/spindle`. Follow the exact browser/bootstrap/queue
+steps in [github-governance.md](github-governance.md). Checked-in ruleset and settings
+payloads are ready, but GitHub rejected administrative writes from this cloud
+integration with HTTP 403. None of those settings is claimed applied. The existing
+CI workflow is still in PR #1, so bootstrap main before requiring the merge queue.
 
 ## Live NeMo episodes (implementation continues without these credentials)
 

@@ -38,6 +38,7 @@ Start with [the delivery plan](docs/planning/plan.md), then read:
 - [Parallel Codex workers and orchestration options](docs/planning/factory-orchestration.md)
 - [Evaluation gym](docs/planning/gym.md)
 - [Requirements and acceptance coverage](docs/planning/coverage.md)
+- [Organization branch rules and merge queue setup](docs/runbooks/github-governance.md)
 - [Manual setup and outstanding decisions](docs/planning/manual-setup.md)
 - [Research and references](docs/planning/references.md)
 - [Initial task backlog](tasks/README.md)
