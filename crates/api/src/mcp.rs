@@ -5,6 +5,21 @@ use std::io::{BufRead, Write};
 
 const TOOLS: &[(&str, &str, &[&str])] = &[
     (
+        "board_status",
+        "Member reads the optional project board lifecycle state",
+        &["project"],
+    ),
+    (
+        "enable_board",
+        "Owner enables the project board; notes retain their identity",
+        &["project"],
+    ),
+    (
+        "disable_board",
+        "Owner disables the project board without deleting notes",
+        &["project"],
+    ),
+    (
         "publish_note",
         "Publish an explicitly authored derived note from active same-project inputs; all inputs are required",
         &["project", "request_key", "text", "inputs"],
@@ -220,7 +235,7 @@ mod tests {
         );
         assert_eq!(r["result"]["protocolVersion"], "2025-03-26");
         let r = dispatch(&json!({"id":2,"method":"tools/list"}));
-        assert_eq!(r["result"]["tools"].as_array().unwrap().len(), 20);
+        assert_eq!(r["result"]["tools"].as_array().unwrap().len(), 23);
         let listed = r["result"]["tools"].as_array().unwrap();
         for name in [
             "spindle_publish_note",

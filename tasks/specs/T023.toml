@@ -10,3 +10,5 @@ prompt = "Implement v0.3 naming compatibility and board lifecycle. Read sections
 # First slice implements publish_note/correct_note aliases with preserved legacy
 # responses, shared idempotency and unchanged storage/lineage. Board lifecycle and
 # the remainder of the naming migration are still proposed, not complete.
+
+# T028 supplies the bounded board enable/disable slice; placement and the rest of AT-25 remain open.

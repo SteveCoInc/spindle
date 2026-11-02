@@ -144,3 +144,19 @@ key still conflicts. Mixed `note`/`memory` correction fields are rejected.
 This is an additive wire-name migration only. Existing IDs, database tables,
 inspection/search kinds and retraction counters are unchanged. Board lifecycle,
 hierarchy, attributes and subscriptions remain subsequent T023–T026 work.
+
+## Optional board lifecycle
+
+After `make migrate` (schema 8), every project has `board_enabled=false` by default,
+including preexisting projects. The HTTP `/v1` operations `board_status`,
+`enable_board`, and `disable_board` take a `project` ID. Any current member can read
+status; only the owner can change it. Responses contain `project` and `enabled`.
+The shared MCP exposes `spindle_board_status`, `spindle_enable_board` and
+`spindle_disable_board`. Repeating a desired-state operation is idempotent; changes
+are serialized with membership updates through the existing transaction guard.
+
+The flag is PostgreSQL state and survives service restarts. Disabling preserves
+all evidence, note identities, versions, lineage and ordinary search/inspection.
+This slice does not yet provide placements, folder/tag listing, attributes,
+subscriptions or lifecycle event delivery. Those later APIs must enforce the flag;
+enabling it today does not claim those organization features exist.
