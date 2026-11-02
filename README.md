@@ -25,11 +25,15 @@ make serve
 
 See [product verification](docs/runbooks/product-evidence.md),
 [foundation verification](docs/runbooks/m0-evidence.md) and the remaining
-[manual actions](docs/runbooks/manual-actions.md). No schedule is needed yet.
+[manual actions](docs/runbooks/manual-actions.md). A persistent dispatcher is not installed; see the factory runbook for active-session pickup and the unattended runtime gap.
 
 CI definitions cover Rust and storage checks. Independent review requires a
 working Codex login and network access. The runner does not yet dispatch on a
 schedule or merge changes automatically.
+
+Inspect actionable work with `make factory-backlog` and `make factory-next`.
+[GitHub phase tracker](https://github.com/SteveCoInc/spindle/issues/7) mirrors the
+repository roadmap; task selection and claims remain repository/factory owned.
 
 Start with [the delivery plan](docs/planning/plan.md), then read:
 

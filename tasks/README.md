@@ -1,11 +1,19 @@
 # Initial task backlog
 
-Implementation of the M0 foundation is now authorized and underway. The executable
-registry in `tasks/specs` currently contains the consolidated foundation task; this
-planning table retains the finer milestone decomposition. The working foundation
-covers portions of T001–T004 and T021. GitHub API access now works and draft PR #1 exists. T005 tracks the first product
-slice; broader M1 work continues independently of live-review qualification. No
-task is claimed fully done merely because code or deterministic tests exist.
+The repository owns task definitions and acceptance. GitHub [phase tracker #7](https://github.com/SteveCoInc/spindle/issues/7)
+mirrors progress. `make factory-backlog` shows executable readiness and exclusions;
+`make factory-next` selects the first eligible task by ID without claiming it.
+The table below includes broader planning items not yet split into executable files.
+T001/T005/T019 remain partial or blocked; unrelated product work can proceed.
+PR #4 proved native merge-group checks and automatic queue merge.
+
+Current bounded dispatch backlog:
+
+| Task | State | Tracking | Acceptance boundary |
+|---|---|---|---|
+| T027 | Ready / active claim during implementation | [#5](https://github.com/SteveCoInc/spindle/issues/5) | Task readiness and pickup; no unattended scheduler claim |
+| T028 | Ready | [#6](https://github.com/SteveCoInc/spindle/issues/6) | Optional board enable/disable only; part of T023 |
+
 
 | ID | Milestone | Depends on | Task and acceptance evidence |
 |---|---|---|---|

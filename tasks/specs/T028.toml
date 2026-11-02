@@ -1,0 +1,8 @@
+id = "T028"
+title = "Implement optional project board enable and disable lifecycle"
+status = "ready"
+dependencies = []
+requirements = ["BRD-01", "BRD-08", "BRD-10"]
+acceptance = ["Project board defaults off and existing note workflows continue unchanged", "Authorized project administrators can enable and disable board idempotently", "Outsiders and unauthorized members cannot change board settings", "Disable preserves notes and existing identities; state survives restart", "Real HTTP and storage tests exercise lifecycle; shared MCP exposes the operations"]
+scope = ["crates/api/", "migrations/", "integrations/", "docs/", "tasks/"]
+prompt = "Implement only the board lifecycle slice from v0.3 section 30. Inspect project ownership and membership contracts first. Defer placements, hierarchy, attributes and subscriptions to subsequent tasks. Preserve source privacy, lineage and legacy APIs."

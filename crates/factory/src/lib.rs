@@ -87,10 +87,64 @@ pub struct Claim {
     pub expires: i64,
     pub state: String,
 }
+#[derive(Debug, Serialize)]
+pub struct TaskReadiness {
+    pub id: String,
+    pub title: String,
+    pub status: String,
+    pub eligible: bool,
+    pub reasons: Vec<String>,
+}
+
+/// Advisory snapshot only. Claim acquisition remains the atomic authority.
+pub fn backlog(
+    tasks: &BTreeMap<String, Task>,
+    claims: &[Claim],
+    paused: bool,
+) -> Vec<TaskReadiness> {
+    tasks
+        .values()
+        .map(|task| {
+            let mut reasons = Vec::new();
+            if paused {
+                reasons.push("dispatch paused".into());
+            }
+            if task.status != "ready" {
+                reasons.push(format!("task status is {}", task.status));
+            }
+            for dependency in &task.dependencies {
+                if tasks.get(dependency).is_none_or(|dep| dep.status != "done") {
+                    reasons.push(format!("dependency {dependency} is not done"));
+                }
+            }
+            if let Some(claim) = claims
+                .iter()
+                .find(|c| c.task == task.id && c.state != "released")
+            {
+                reasons.push(format!(
+                    "{} claim owned by {} (generation {}); reconcile explicitly even if expired",
+                    claim.state, claim.worker, claim.generation
+                ));
+            }
+            TaskReadiness {
+                id: task.id.clone(),
+                title: task.title.clone(),
+                status: task.status.clone(),
+                eligible: reasons.is_empty(),
+                reasons,
+            }
+        })
+        .collect()
+}
 pub struct Ledger {
     conn: Connection,
 }
 impl Ledger {
+    pub fn paused(&self) -> Result<bool> {
+        Ok(self
+            .conn
+            .query_row("SELECT paused FROM control WHERE id=1", [], |r| r.get(0))?)
+    }
     pub fn open(path: &Path) -> Result<Self> {
         if let Some(parent) = path.parent() {
             fs::create_dir_all(parent)?;

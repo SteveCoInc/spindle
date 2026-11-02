@@ -21,7 +21,9 @@ do not turn routine reversible implementation choices into approval requests.
 
 1. Inspect Git status and preserve existing changes. Use the existing checkout;
    cloud tasks are isolated already. Do not create a worktree unless requested.
-2. Find the assigned task and its dependencies, requirement IDs, and acceptance
+2. Run `make factory-backlog` and `make factory-next` when no task is assigned.
+   Follow docs/runbooks/factory.md active-session pickup through the merge queue,
+   then select the next eligible task. Find its dependencies, requirement IDs, and acceptance
    criteria. Never infer completion from a task's prose alone.
 3. Keep code, tests, docs, migrations, and task evidence together. Record important
    decisions and unresolved limitations in the repository, not only in chat.

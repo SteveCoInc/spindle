@@ -5,7 +5,7 @@ COMPOSE := docker compose -p $(or $(SPINDLE_STACK),spindle-dev) -f infra/compose
 FACTORY := $(CARGO) run --quiet --locked -p spindle-factory --
 .PHONY: help bootstrap check test up down migrate doctor test-integration serve qualify review factory-status factory-pause factory-resume
 help:
-	@echo 'bootstrap check test up down migrate doctor test-integration serve worker project rebuild-search mcp qualify review factory-status factory-pause factory-resume gym-bootstrap gym-contracts'
+	@echo 'bootstrap check test up down migrate doctor test-integration serve worker project rebuild-search mcp qualify review factory-status factory-backlog factory-next factory-pause factory-resume gym-bootstrap gym-contracts'
 bootstrap:
 	$(CARGO) fetch --locked
 check:
@@ -34,6 +34,11 @@ review:
 	$(FACTORY) review
 factory-status:
 	$(FACTORY) status
+.PHONY: factory-backlog factory-next
+factory-backlog:
+	$(FACTORY) backlog
+factory-next:
+	$(FACTORY) next
 factory-pause:
 	$(FACTORY) pause
 factory-resume:
