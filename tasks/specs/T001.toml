@@ -1,0 +1,11 @@
+id = "T001"
+title = "Rust factory and local storage foundation"
+status = "blocked"
+dependencies = []
+requirements = ["EXT-04", "EXT-05", "EXT-11", "EXT-13"]
+acceptance = ["Rust fmt, clippy and tests pass", "Duplicate claim and stale completion are rejected", "PostgreSQL transaction and OpenSearch retrieval pass", "Clean-commit qualification records failures", "Independent review identifies exact commit"]
+scope = ["crates/", "infra/", "migrations/", "factory/", "tasks/", "docs/", "Makefile", ".github/"]
+prompt = "Implement and validate the M0 foundation. Preserve original product spec. Report external authentication/network blockers rather than claiming unrun checks passed."
+
+# Implementation and deterministic verification exist. Unblock after Codex
+# authentication repair for live independent review; see docs/runbooks/manual-actions.md.

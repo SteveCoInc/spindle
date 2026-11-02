@@ -1,0 +1,15 @@
+[package]
+name = "spindle-api"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+serde_json.workspace = true
+postgres = "0.19"
+reqwest = { version = "0.12", default-features = false, features = ["blocking", "json", "rustls-tls"] }
+tiny_http = "0.12"
+serde.workspace = true
+uuid = { version = "1", features = ["v4"] }
+sha2 = "0.10"

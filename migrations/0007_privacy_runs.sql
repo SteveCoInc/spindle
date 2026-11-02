@@ -1,0 +1,9 @@
+BEGIN;
+CREATE TABLE IF NOT EXISTS privacy_runs (
+ id TEXT PRIMARY KEY,
+ principal_id TEXT NOT NULL REFERENCES principals(id),
+ roots TEXT[] NOT NULL,
+ created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+INSERT INTO spindle_schema_migrations(version) VALUES(7) ON CONFLICT DO NOTHING;
+COMMIT;

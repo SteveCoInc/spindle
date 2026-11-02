@@ -1,0 +1,8 @@
+repository = "https://github.com/NVIDIA-NeMo/Gym.git"
+revision = "0c7ac5119c99e0aa0dfeda7be59157c589680ffd"
+uv_lock_sha256 = "41307a94240a00bf628f648abd93b027e94c74d06400b3c5f5377656f5e6f91d"
+python = "3.13.14"
+uv_tested = "0.12.23"
+codex_harness_default = "0.144.4"
+local_factory_codex = "0.163.0"
+status = "upstream_contracts_and_local_docker_qualified; live_product_episode_pending"

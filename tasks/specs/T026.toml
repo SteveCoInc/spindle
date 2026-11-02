@@ -1,0 +1,8 @@
+id = "T026"
+title = "Evaluate data-project board collaboration and Night Shift"
+status = "proposed"
+dependencies = ["T024", "T025"]
+requirements = ["BRD-11", "BRD-12"]
+acceptance = ["AT-37: Night Shift does not invent progress, completion or ownership", "AT-40: real isolated agents produce externally graded data artifacts in matched board-enabled and board-disabled arms"]
+scope = ["crates/", "migrations/", "integrations/", "gym/", "docs/", "tasks/", "Makefile", "Cargo.toml", "Cargo.lock", "README.md", "AGENTS.md"]
+prompt = "Build the v0.3 section 6B data-project gym episode. Record actual note exposures and injected changes; preserve the $100/four-hour full-run ceiling and label fixture tests separately from live quality evidence."
