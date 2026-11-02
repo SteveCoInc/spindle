@@ -5,6 +5,16 @@ use std::io::{BufRead, Write};
 
 const TOOLS: &[(&str, &str, &[&str])] = &[
     (
+        "publish_note",
+        "Publish an explicitly authored derived note from active same-project inputs; all inputs are required",
+        &["project", "request_key", "text", "inputs"],
+    ),
+    (
+        "correct_note",
+        "Author replaces a note from its original inputs and retires dependent outputs",
+        &["note", "request_key", "text"],
+    ),
+    (
         "rescan_privacy",
         "Explicitly purge your excluded historical content and dependent prose; index cleanup is asynchronous",
         &[],
@@ -16,12 +26,12 @@ const TOOLS: &[(&str, &str, &[&str])] = &[
     ),
     (
         "correct_memory",
-        "Author replaces a memory from its original inputs and retires dependent outputs",
+        "Legacy alias for correct_note; accepts memory and returns memory instead of note",
         &["memory", "request_key", "text"],
     ),
     (
         "publish_memory",
-        "Publish explicitly authored synthesis from active same-project inputs; all inputs are required",
+        "Legacy alias for publish_note; returns memory instead of note",
         &["project", "request_key", "text", "inputs"],
     ),
     (
@@ -210,7 +220,24 @@ mod tests {
         );
         assert_eq!(r["result"]["protocolVersion"], "2025-03-26");
         let r = dispatch(&json!({"id":2,"method":"tools/list"}));
-        assert_eq!(r["result"]["tools"].as_array().unwrap().len(), 18);
+        assert_eq!(r["result"]["tools"].as_array().unwrap().len(), 20);
+        let listed = r["result"]["tools"].as_array().unwrap();
+        for name in [
+            "spindle_publish_note",
+            "spindle_publish_memory",
+            "spindle_correct_note",
+            "spindle_correct_memory",
+        ] {
+            assert!(listed.iter().any(|t| t["name"] == name), "missing {name}");
+        }
+        let correct = listed
+            .iter()
+            .find(|t| t["name"] == "spindle_correct_note")
+            .unwrap();
+        assert_eq!(
+            correct["inputSchema"]["required"],
+            json!(["note", "request_key", "text"])
+        );
         let r = dispatch(&json!({"id":3,"method":"tools/call","params":{"name":"shell"}}));
         assert_eq!(r["error"]["code"], -32602);
     }

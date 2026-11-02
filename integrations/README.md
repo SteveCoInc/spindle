@@ -28,3 +28,7 @@ transcript hooks, silently capture sessions, or claim a persistent status-line U
 Call `spindle_status` and `spindle_start_session` before sharing any evidence.
 Only share text explicitly intended for all project members. Automatic transcript
 capture remains disabled until privacy filtering and host spooling are qualified.
+
+Prefer `spindle_publish_note` and `spindle_correct_note` for new integrations.
+Legacy memory-named tools remain discoverable as compatibility aliases; see the
+[wire-field contract](../docs/runbooks/local-product.md#note-terminology-compatibility-first-v03-migration-slice).

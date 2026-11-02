@@ -29,11 +29,12 @@ No further network change is indicated for the observed ChatGPT 401 failure.
 
 ## GitHub controls after organization transfer
 
-The repository is now `SteveCoInc/spindle`. Follow the exact browser/bootstrap/queue
-steps in [github-governance.md](github-governance.md). Checked-in ruleset and settings
-payloads are ready, but GitHub rejected administrative writes from this cloud
-integration with HTTP 403. None of those settings is claimed applied. The existing
-CI workflow is still in PR #1, so bootstrap main before requiring the merge queue.
+The user enabled the merge queue and branch rules on `SteveCoInc/spindle`. Verified:
+main is protected, PR #1 is merged, merge-group CI exists on main, both checks are
+required, and strict branch-up-to-date checking is off. No further manual queue
+configuration is currently needed. See [github-governance.md](github-governance.md)
+for the live settings and prior integration-permission limitations. The next
+compatibility PR will exercise actual queue execution.
 
 ## Live NeMo episodes (implementation continues without these credentials)
 

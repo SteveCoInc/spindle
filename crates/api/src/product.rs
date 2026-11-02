@@ -36,6 +36,17 @@ pub fn provision(id: &str, token: &str) -> Result<()> {
 #[derive(Deserialize)]
 #[serde(tag = "op", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Operation {
+    PublishNote {
+        request_key: String,
+        project: String,
+        text: String,
+        inputs: Vec<String>,
+    },
+    CorrectNote {
+        note: String,
+        request_key: String,
+        text: String,
+    },
     RescanPrivacy {},
     PrivacyRunStatus {
         run: String,
@@ -128,6 +139,17 @@ fn source(db: &mut impl GenericClient, id: &str, who: &str) -> Result<Value> {
         ),
     }
 }
+// Wire naming only: canonical and legacy operations share the same transaction,
+// identity checks, publication keys and lineage implementation.
+fn note_response(mut value: Value) -> Result<Value> {
+    let id = value
+        .as_object_mut()
+        .and_then(|v| v.remove("memory"))
+        .ok_or_else(|| anyhow::anyhow!("publication response missing object identity"))?;
+    value["note"] = id;
+    Ok(value)
+}
+
 pub fn execute(token: &str, op: Operation) -> Result<Value> {
     let mut db = super::database()?;
     let who: String = db
@@ -142,6 +164,30 @@ pub fn execute(token: &str, op: Operation) -> Result<Value> {
     // changes. Replace with scoped guards after measured concurrency requirements.
     tx.batch_execute("LOCK TABLE memberships IN SHARE ROW EXCLUSIVE MODE")?;
     let result = match op {
+        Operation::PublishNote {
+            request_key,
+            project,
+            text,
+            inputs,
+        } => note_response(super::lineage::publish(
+            &mut tx,
+            &project,
+            &who,
+            &request_key,
+            &text,
+            &inputs,
+        )?)?,
+        Operation::CorrectNote {
+            note,
+            request_key,
+            text,
+        } => note_response(super::lineage::correct(
+            &mut tx,
+            &note,
+            &who,
+            &request_key,
+            &text,
+        )?)?,
         Operation::RescanPrivacy {} => super::lineage::rescan(&mut tx, &who)?,
         Operation::PrivacyRunStatus { run } => {
             let roots: Vec<String> = tx
@@ -594,7 +640,36 @@ pub fn integration() -> Result<()> {
                 .unwrap()
                 .to_owned();
         let independent=call(0,json!({"op":"capture","session":independent_session,"request_key":"independent","text":"Unrelated retention guidance"}))?["evidence"].as_str().unwrap().to_owned();
-        let independent_memory=call(0,json!({"op":"publish_memory","request_key":uuid::Uuid::new_v4().to_string(),"project":p,"text":"Retention policy remains supported","inputs":[independent]}))?["memory"].as_str().unwrap().to_owned();
+        let publication = json!({"op":"publish_note","request_key":"independent-note","project":p,"text":"Retention policy remains supported","inputs":[independent]});
+        let published = call(0, publication.clone())?;
+        assert!(published.get("memory").is_none());
+        let independent_memory = published["note"].as_str().unwrap().to_owned();
+        let mut legacy_publication = publication.clone();
+        legacy_publication["op"] = json!("publish_memory");
+        assert_eq!(call(0, legacy_publication)?["memory"], independent_memory);
+        assert_eq!(call(0, publication.clone())?["note"], independent_memory);
+        let mut conflict = publication.clone();
+        conflict["text"] = json!("Conflicting content");
+        assert_eq!(
+            client
+                .post(format!("{base}/v1"))
+                .bearer_auth(&tokens[0])
+                .json(&conflict)
+                .send()?
+                .status()
+                .as_u16(),
+            409
+        );
+        assert_eq!(
+            client
+                .post(format!("{base}/v1"))
+                .bearer_auth(&tokens[2])
+                .json(&publication)
+                .send()?
+                .status()
+                .as_u16(),
+            403
+        );
         let mut parent = id.clone();
         for depth in 0..30 {
             parent=call(0,json!({"op":"publish_memory","request_key":uuid::Uuid::new_v4().to_string(),"project":p,"text":format!("Derived charge policy level {depth}"),"inputs":[parent]}))?["memory"].as_str().unwrap().to_owned();
@@ -669,11 +744,23 @@ pub fn integration() -> Result<()> {
         );
         let correction = json!({"op":"correct_memory","memory":independent_memory,"request_key":"fix-retention","text":"Corrected retention policy"});
         assert!(call(1, correction.clone()).is_err());
-        let corrected = call(0, correction.clone())?["memory"]
+        let note_correction = json!({"op":"correct_note","note":independent_memory,"request_key":"fix-retention","text":"Corrected retention policy"});
+        let corrected = call(0, note_correction.clone())?["note"]
             .as_str()
             .unwrap()
             .to_owned();
         assert_eq!(call(0, correction)?["memory"], corrected);
+        assert_eq!(call(0, note_correction.clone())?["note"], corrected);
+        assert_eq!(
+            client
+                .post(format!("{base}/v1"))
+                .bearer_auth(&tokens[1])
+                .json(&note_correction)
+                .send()?
+                .status()
+                .as_u16(),
+            403
+        );
         assert_eq!(
             call(1, json!({"op":"inspect","evidence":independent_memory}))?["retracted"],
             true
@@ -916,6 +1003,31 @@ pub fn rebuild() -> Result<()> {
 #[cfg(test)]
 mod privacy_tests {
     use super::*;
+    #[test]
+    fn correction_names_have_unambiguous_wire_fields() {
+        assert!(matches!(
+            serde_json::from_value::<Operation>(
+                json!({"op":"correct_note","note":"n1","request_key":"r1","text":"new"})
+            )
+            .unwrap(),
+            Operation::CorrectNote { .. }
+        ));
+        assert!(matches!(
+            serde_json::from_value::<Operation>(
+                json!({"op":"correct_memory","memory":"n1","request_key":"r1","text":"new"})
+            )
+            .unwrap(),
+            Operation::CorrectMemory { .. }
+        ));
+        for op in ["correct_note", "correct_memory"] {
+            assert!(
+                serde_json::from_value::<Operation>(
+                    json!({"op":op,"note":"n1","memory":"n2","request_key":"r1","text":"new"})
+                )
+                .is_err()
+            );
+        }
+    }
     #[test]
     fn exclusions_are_literal_case_insensitive_and_validated() {
         assert!(excluded("token SECRET-key", &["secret-KEY".into()]));

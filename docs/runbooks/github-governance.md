@@ -1,12 +1,27 @@
 # GitHub setup for agent development
 
 Repository: [SteveCoInc/spindle](https://github.com/SteveCoInc/spindle).
+
+## Current verified state
+
+The user applied ruleset **26340388**, active on the default branch, with no bypass
+actors. Main is protected; PR #1 is merged and main contains the merge-group-aware
+workflow. Both named CI checks are required. Strict branch-up-to-date checking is
+off, as appropriate when the queue handles candidate validation. The live queue
+uses squash, two concurrent builds, groups of 1–5 PRs, a 5-minute minimum-group
+wait setting and a 60-minute check timeout. These are valid user-selected settings;
+the one-PR/45-minute values below are conservative recommendations, not a claim
+that those exact values are currently configured. Auto-merge, squash-only repository
+merging and merged-branch deletion are enabled. Live queue execution is being
+qualified with the next note-tool compatibility PR.
+
+## Initial setup history and reusable configuration
 The repository is public and organization-owned. The authenticated account has
 admin role, but the cloud integration's token receives **403 Resource not accessible
 by integration** on repository administration and Actions-settings APIs. Attempts
 to create the ruleset, update merge settings and change Actions defaults were all
-rejected. None of those settings was applied by this session. A subsequent branch
-read confirmed `main.protected = false`. This is a GitHub App
+rejected. None of those settings was applied by this session. At that time, a branch
+read confirmed `main.protected = false`; the current verified state above supersedes it. This is a GitHub App
 permission boundary, not a missing local login or a network allowlist issue.
 
 ## Apply the initial controls in GitHub
