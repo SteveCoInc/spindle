@@ -1,8 +1,10 @@
 id = "T027"
 title = "Expose actionable factory backlog and session pickup"
-status = "ready"
+status = "done"
 dependencies = []
 requirements = ["EXT-05", "EXT-13"]
 acceptance = ["Backlog explains dependency, status, pause and claim exclusions", "Next selects deterministically without claiming or launching models", "Expired claims remain excluded until explicit reconciliation", "Repository runbook defines pickup through native queue and honest unattended blockers"]
 scope = ["crates/factory/", "tasks/", "docs/", "Makefile", "README.md", "AGENTS.md"]
 prompt = "Add backlog and next commands with deterministic qualification. Mirror bounded tasks into GitHub issues, keeping Git task definitions authoritative. Record actual queue evidence, not a claim of continuous scheduling."
+
+# Acceptance and native queue merge: PR #8; see docs/runbooks/factory-delivery.md.

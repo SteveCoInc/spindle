@@ -36,6 +36,15 @@ pub fn provision(id: &str, token: &str) -> Result<()> {
 #[derive(Deserialize)]
 #[serde(tag = "op", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Operation {
+    BoardStatus {
+        project: String,
+    },
+    EnableBoard {
+        project: String,
+    },
+    DisableBoard {
+        project: String,
+    },
     PublishNote {
         request_key: String,
         project: String,
@@ -164,6 +173,32 @@ pub fn execute(token: &str, op: Operation) -> Result<Value> {
     // changes. Replace with scoped guards after measured concurrency requirements.
     tx.batch_execute("LOCK TABLE memberships IN SHARE ROW EXCLUSIVE MODE")?;
     let result = match op {
+        Operation::BoardStatus { project } => {
+            member(&mut tx, &project, &who, false)?;
+            let enabled: bool = tx
+                .query_one(
+                    "SELECT board_enabled FROM projects WHERE id=$1",
+                    &[&project],
+                )?
+                .get(0);
+            json!({"project":project,"enabled":enabled})
+        }
+        Operation::EnableBoard { project } => {
+            member(&mut tx, &project, &who, true)?;
+            tx.execute(
+                "UPDATE projects SET board_enabled=TRUE WHERE id=$1",
+                &[&project],
+            )?;
+            json!({"project":project,"enabled":true})
+        }
+        Operation::DisableBoard { project } => {
+            member(&mut tx, &project, &who, true)?;
+            tx.execute(
+                "UPDATE projects SET board_enabled=FALSE WHERE id=$1",
+                &[&project],
+            )?;
+            json!({"project":project,"enabled":false})
+        }
         Operation::PublishNote {
             request_key,
             project,
@@ -528,6 +563,66 @@ pub fn integration() -> Result<()> {
             .unwrap()
             .to_owned();
         projects.push(p.clone());
+        assert_eq!(
+            call(0, json!({"op":"board_status","project":p}))?["enabled"],
+            false
+        );
+        for op in ["board_status", "enable_board", "disable_board"] {
+            let denied = client
+                .post(format!("{base}/v1"))
+                .bearer_auth(&tokens[2])
+                .json(&json!({"op":op,"project":p}))
+                .send()?;
+            assert_eq!(denied.status().as_u16(), 403);
+        }
+        for _ in 0..2 {
+            assert_eq!(
+                call(0, json!({"op":"enable_board","project":p}))?["enabled"],
+                true
+            );
+        }
+        // A fresh service process reads committed state from PostgreSQL.
+        let listener = std::net::TcpListener::bind("127.0.0.1:0")?;
+        let fresh_address = listener.local_addr()?;
+        drop(listener);
+        let fresh_server = Server(
+            std::process::Command::new(std::env::current_exe()?)
+                .arg("serve")
+                .env("SPINDLE_BIND", fresh_address.to_string())
+                .env("SPINDLE_SCHEMA", super::schema())
+                .env("SPINDLE_INDEX", super::index())
+                .stdout(std::process::Stdio::null())
+                .spawn()?,
+        );
+        let fresh_base = format!("http://{fresh_address}");
+        let mut fresh_ready = false;
+        for _ in 0..100 {
+            if client
+                .get(format!("{fresh_base}/healthz"))
+                .send()
+                .is_ok_and(|r| r.status().is_success())
+            {
+                fresh_ready = true;
+                break;
+            }
+            std::thread::sleep(std::time::Duration::from_millis(50));
+        }
+        anyhow::ensure!(fresh_ready, "fresh service failed to start");
+        let persisted: Value = client
+            .post(format!("{fresh_base}/v1"))
+            .bearer_auth(&tokens[0])
+            .json(&json!({"op":"board_status","project":p}))
+            .send()?
+            .error_for_status()?
+            .json()?;
+        assert_eq!(persisted["enabled"], true);
+        drop(fresh_server);
+        for _ in 0..2 {
+            assert_eq!(
+                call(0, json!({"op":"disable_board","project":p}))?["enabled"],
+                false
+            );
+        }
         assert!(
             execute(
                 "invalid",
@@ -549,6 +644,18 @@ pub fn integration() -> Result<()> {
             )
             .is_err()
         );
+        assert_eq!(
+            call(1, json!({"op":"board_status","project":p}))?["enabled"],
+            false
+        );
+        for op in ["enable_board", "disable_board"] {
+            let denied = client
+                .post(format!("{base}/v1"))
+                .bearer_auth(&tokens[1])
+                .json(&json!({"op":op,"project":p}))
+                .send()?;
+            assert_eq!(denied.status().as_u16(), 403);
+        }
         call(0, json!({"op":"activate","workspace":"repo","project":p}))?;
         let session = call(0, json!({"op":"start_session","workspace":"repo"}))?["session"]
             .as_str()
@@ -580,6 +687,11 @@ pub fn integration() -> Result<()> {
                 "{}",
                 json!({"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"spindle_status","arguments":{"workspace":"repo"}}})
             )?;
+            writeln!(
+                input,
+                "{}",
+                json!({"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"spindle_board_status","arguments":{"project":p}}})
+            )?;
         }
         let output = mcp.wait_with_output()?;
         assert!(output.status.success());
@@ -588,7 +700,7 @@ pub fn integration() -> Result<()> {
             .lines()
             .map(serde_json::from_str)
             .collect::<std::result::Result<_, _>>()?;
-        assert_eq!(responses.len(), 2);
+        assert_eq!(responses.len(), 3);
         assert_eq!(responses[1]["result"]["isError"], false);
         let status: Value = serde_json::from_str(
             responses[1]["result"]["content"][0]["text"]
@@ -596,6 +708,13 @@ pub fn integration() -> Result<()> {
                 .unwrap(),
         )?;
         assert_eq!(status["project"], p);
+        assert_eq!(responses[2]["result"]["isError"], false);
+        let board: Value = serde_json::from_str(
+            responses[2]["result"]["content"][0]["text"]
+                .as_str()
+                .unwrap(),
+        )?;
+        assert_eq!(board["enabled"], false);
         // Activation removal must not change an already-bound session.
         call(0, json!({"op":"leave","workspace":"repo"}))?;
         assert!(call(0, json!({"op":"start_session","workspace":"repo"})).is_err());
@@ -679,6 +798,21 @@ pub fn integration() -> Result<()> {
         project_search()?;
         let query = json!({"op":"search","project":p,"query":"idempotency"});
         assert_eq!(call(1, query.clone())?["hits"][0]["id"], id);
+        let note_before = call(0, json!({"op":"inspect","evidence":independent_memory}))?;
+        call(0, json!({"op":"enable_board","project":p}))?;
+        call(0, json!({"op":"disable_board","project":p}))?;
+        assert_eq!(
+            call(0, json!({"op":"inspect","evidence":independent_memory}))?,
+            note_before
+        );
+        assert_eq!(call(1, query.clone())?["hits"][0]["id"], id);
+        call(0, json!({"op":"enable_board","project":p}))?;
+        assert_eq!(
+            call(0, json!({"op":"board_status","project":p}))?["enabled"],
+            true
+        );
+        call(0, json!({"op":"disable_board","project":p}))?;
+
         assert!(call(2, query.clone()).is_err());
         call(
             1,
@@ -699,6 +833,7 @@ pub fn integration() -> Result<()> {
         )?;
         assert!(call(1,json!({"op":"capture","session":member_session,"request_key":"revoked","text":"No longer authorized"})).is_err());
         assert!(call(1, query.clone()).is_err());
+        assert!(call(1, json!({"op":"board_status","project":p})).is_err());
         call(
             1,
             json!({"op":"personal_privacy","terms":["Member-authored"]}),

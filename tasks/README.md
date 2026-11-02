@@ -11,7 +11,7 @@ Current bounded dispatch backlog:
 
 | Task | State | Tracking | Acceptance boundary |
 |---|---|---|---|
-| T027 | Ready / active claim during implementation | [#5](https://github.com/SteveCoInc/spindle/issues/5) | Task readiness and pickup; no unattended scheduler claim |
+| T027 | Done: PR #8 merged through native queue | [#5](https://github.com/SteveCoInc/spindle/issues/5) | Task readiness and pickup; no unattended scheduler claim |
 | T028 | Ready | [#6](https://github.com/SteveCoInc/spindle/issues/6) | Optional board enable/disable only; part of T023 |
 
 
