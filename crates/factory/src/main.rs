@@ -21,6 +21,10 @@ struct Cli {
 enum Action {
     Validate,
     Status,
+    /// Explain readiness for every task, including dependencies and existing claims.
+    Backlog,
+    /// Print the first eligible task by ID; advisory only, does not claim or launch it.
+    Next,
     Claim {
         task: String,
         worker: String,
@@ -148,6 +152,19 @@ fn main() -> Result<()> {
             "{}",
             serde_json::to_string_pretty(&Ledger::open(&db)?.status()?)?
         ),
+        Action::Backlog | Action::Next => {
+            let ts = tasks(&repo.join("tasks/specs"))?;
+            let ledger = Ledger::open(&db)?;
+            let backlog = spindle_factory::backlog(&ts, &ledger.status()?, ledger.paused()?);
+            if matches!(cli.command, Action::Next) {
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(&backlog.iter().find(|t| t.eligible))?
+                );
+            } else {
+                println!("{}", serde_json::to_string_pretty(&backlog)?);
+            }
+        }
         Action::Claim { task, worker, ttl } => {
             let ts = tasks(&repo.join("tasks/specs"))?;
             let t = ts.get(&task).context("unknown task")?;
