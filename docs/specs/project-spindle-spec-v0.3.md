@@ -1,34 +1,37 @@
 # Context Projects — Product and Technical Specification
 
-**Status:** Working draft, v0.3 — notes, optional project board, and session subscriptions  
-**Date:** November 1, 2026  
+**Status:** Working draft, v0.3 (v8 revision) — Project Connections
+**Date:** November 18, 2026
+
 **Working feature name:** Context Projects  
 **Internal codename:** Project Spindle (not a customer-facing product name)  
 **Product context:** Standalone Spindle project knowledge service; “Context” remains the illustrative agent-tool namespace  
 **Audience:** Product, design, engineering, security, and developer-experience teams  
-**Revision note:** v0.3 adopts **notes** as the common term for previously named memories, adds the optional project board and active-session subscriptions, and adds a data-project collaboration hero scenario. It incorporates the subsequently confirmed standalone Rust/PostgreSQL/OpenSearch direction. v0.2 remains unchanged as the historical source. A deferred external-audit integration and project off-switch contract are captured in §31; they are outside this prototype phase.
+**Revision note:** v0.3 adopts **notes** as the common term for previously named memories, adds the project board and active-session subscriptions, and adds a data-project collaboration hero scenario. It incorporates the subsequently confirmed standalone Rust/PostgreSQL/OpenSearch direction. v0.2 remains unchanged as the historical source. A deferred external-audit integration and project off-switch contract are captured in §31; they are outside this prototype phase.
 **Source:** The product-design conversation from which this document was requested. This is a proposed feature specification, **not** a statement of released AWS functionality or official AWS API contracts.
 
 > **Product promise:** Start a project in your coding agent, keep working normally, and let useful team knowledge accumulate—with clear visibility, personal privacy controls, evidence, and the ability to correct or retract what was learned.
 
 **Future extension:** [External audit and project off switch](#31-future-extension-external-organizational-audit-and-project-off-switch) — explicitly deferred.
 
-**New in v0.3:** [Board collaboration hero](#6b-second-hero-scenario-an-agent-team-builds-a-trustworthy-revenue-dataset) · [Board and subscription contract](#30-optional-project-board-and-live-session-subscriptions) · [New acceptance scenarios](#at-25--optional-board-and-one-note-identity)  
+**v8 revision.** Project Connections adds explicit attachment of accessible sources and personal suggestions discovered during project work. The requirements below describe the intended product. The v7 mock is the implementation baseline. [Project Connections](#32-project-connections)
 
-**Quick navigation:** [Customer storyboard](#6-golden-path-customer-experience-a-storyboard) · [User stories](#7-user-stories) · [Functional requirements](#8-functional-requirements) · [Architecture](#11-architectural-model) · [Rollback and provenance](#14-provenance-correction-and-rollback) · [Briefing and Impact](#15-feedback-note-effectiveness-and-demonstrating-value) · [Night Shift](#16-night-shift--daily-project-intelligence-maintenance) · [Blueprints](#17-built-in-project-blueprints) · [Agent interface](#18-agent-native-ux-command-grammar-and-tool-discoverability) · [Open questions](#23-open-design-questions-and-brainstorming-backlog) · [Acceptance tests](#24-acceptance-scenarios-and-system-tests) · [Prototype handoff](#25-prototype-handoff-what-the-later-clickable-html-mock-should-demonstrate) · [Formal claims and reasoning — future phase](#28-future-phase-structured-claims-and-formal-reasoning) · [Terminology decision](#29-terminology-decision-and-compatibility)
+**New in v0.3:** [Board collaboration hero](#6b-second-hero-scenario-an-agent-team-builds-a-trustworthy-revenue-dataset) · [Board and subscription contract](#30-project-board-and-live-session-subscriptions) · [New acceptance scenarios](#at-25--standard-board-and-one-note-identity)
+
+**Quick navigation:** [Customer storyboard](#6-golden-path-customer-experience-a-storyboard) · [User stories](#7-user-stories) · [Functional requirements](#8-functional-requirements) · [Architecture](#11-architectural-model) · [Rollback and provenance](#14-provenance-correction-and-rollback) · [Impact](#15-feedback-note-effectiveness-and-demonstrating-value) · [Night Shift](#16-night-shift--daily-project-intelligence-maintenance) · [Blueprints](#17-built-in-project-blueprints) · [Agent interface](#18-agent-native-ux-command-grammar-and-tool-discoverability) · [Open questions](#23-open-design-questions-and-brainstorming-backlog) · [Acceptance tests](#24-acceptance-scenarios-and-system-tests) · [Prototype handoff](#25-prototype-handoff-what-the-later-clickable-html-mock-should-demonstrate) · [Formal claims and reasoning — future phase](#28-future-phase-structured-claims-and-formal-reasoning) · [Terminology decision](#29-terminology-decision-and-compatibility)
 
 
 ### Revision contract and compatibility
 
 **Agreed:** “Note” replaces “memory” throughout the product vocabulary. Extracted
 notes, authored notes and derived notes share a project knowledge model; the
-optional board organizes those notes without introducing another kind of content.
+board organizes those notes without introducing another kind of content.
 Blueprint-governed attributes, flexible custom attributes, folders, tags, valid time,
 dependencies and session subscriptions are part of the non-formal-reasoning scope.
 
 Existing `MEM-*` requirement IDs and AT-01–24 are retained for traceability; the
 `MEM` prefix is a historical identifier, not a second object type. New requirements
-use `BRD-*` and `SUB-*`. Proposed APIs use `context.notes.*` and `noteId` terminology.
+use `BRD-*`, `SUB-*` and `CON-*`. Proposed APIs use `context.notes.*` and `noteId` terminology.
 Existing implementation names such as `publish_memory`, `memory_versions` and
 `context.memories.*` require a compatibility/migration plan: accept documented
 legacy aliases during transition, return canonical note names with versioned
@@ -49,13 +52,23 @@ this document specifies desired behavior, not completed acceptance coverage.
 
 ---
 
+> **Scope update — November 4, 2026:** Project briefing is removed at the user's
+> request. US-16 and VAL-01 are withdrawn, not completed. Projects store agent
+> context, evidence and notes; they are not human discussion spaces. The prototype
+> centers the experience on Claude Code. Night Shift remains a separate maintenance capability.
+> **Prototype refinement — November 8, 2026:** The outer shell has Introduction,
+> Claude Code, and Spindle UI tabs. Introduction is the entry page; Claude Code
+> contains the primary interactive terminal and sample sessions. Project navigation
+> and administration chrome appear only inside Spindle UI. Typed demo requests must
+> produce visible responses and update the same state as the administration view.
+
 ## 1. Problem and opportunity
 
 Developers and other knowledge workers make consequential decisions while working with agents, but the reasoning, constraints, discoveries, and corrections from those sessions are scattered across ephemeral conversations and individuals' context. A shared context graph can retrieve information, but it does not by itself define which observations matter to a particular collaborative effort, whose knowledge should be combined, how changes over time should be handled, or how an individual can inspect and retract something contributed accidentally. **Context Projects** provides an agent-native project knowledge and collaboration boundary: a project has a goal, members, and optional steering instructions; associated agent sessions contribute traceable project notes; retrieval blends those notes with the user's broader accessible graph; and maintenance, feedback, and correction continuously improve the shared knowledge. The experience should be almost effortless to begin and progressively reveal its advanced controls only when needed.
 
 ### 1.1 One-minute product description
 
-A user with a configured Spindle instance opens Claude Code, Codex, or another supported agent, asks to create or join a project, and optionally selects a blueprint such as **Software Development**. Context activates that project for subsequent sessions, visibly confirms that activation, and ingests session trajectories through plugin hooks. It extracts relevant decisions, facts, constraints, lessons, and inferred insights into a shared project knowledge layer. Teammates get more useful answers and briefings because their agent can retrieve project knowledge alongside other authorized context. Users can inspect their contributions, correct mistakes, or roll back an entire session and its derived effects. A daily **Night Shift** maintains and improves the project knowledge. A **Briefing** explains what changed, and **Impact** shows when contributions actually helped or led others astray.
+A user with a configured Spindle instance opens Claude Code, Codex, or another supported agent, asks to create or join a project, and optionally selects a blueprint such as **Software Development**. Context activates that project for subsequent sessions, visibly confirms that activation, and ingests session trajectories through plugin hooks. It extracts relevant decisions, facts, constraints, lessons, and inferred insights into a shared project knowledge layer. Teammates get more useful answers because their agent can retrieve project knowledge alongside other authorized context. Users can inspect their contributions, correct mistakes, or roll back an entire session and its derived effects. A daily **Night Shift** maintains and improves the project knowledge. **Impact** shows when contributions actually helped or led others astray.
 
 ### 1.2 Standalone system and boundary
 
@@ -68,7 +81,7 @@ Start with one-machine Rust services, PostgreSQL and OpenSearch. PostgreSQL owns
 canonical versions, source identity, relationships, policies, board state and
 transactional events. OpenSearch supplies retrieval, not authoritative ownership or
 rollback state. A note needs complete provenance whether or not it has semantic
-entity links. The optional board and subscriptions use the same backend.
+entity links. The board and subscriptions use the same backend.
 
 
 ---
@@ -111,7 +124,7 @@ This document uses three labels:
 - Give project members relevant answers that combine current project notes with permitted context from the existing graph.
 - Preserve separate source contributions when multiple people reach overlapping or partially conflicting conclusions; synthesize the best nuanced shared note without erasing evidence.
 - Make project notes temporally aware, correctable, auditable, and reversible from a single session through arbitrary derivation depth.
-- Demonstrate concrete individual and team value through briefing, impact, and feedback.
+- Demonstrate concrete individual and team value through impact and feedback.
 - Support different project types out of the box and allow optional ongoing steering without building a configuration-heavy product.
 
 ### Experience success criteria (targets to validate, not promised metrics)
@@ -121,7 +134,7 @@ This document uses three labels:
 - The first meaningful session results in reviewable extracted notes without requiring a separate application.
 - A teammate can retrieve a relevant project decision, its temporal qualifier, and its supporting evidence while working in a different session.
 - An author can preview the impact of rolling back an accidentally associated session and follow the resulting job to completion.
-- Briefing and Impact distinguish *note produced* from *note retrieved*, *note actually used*, and *note later found misleading*.
+- Impact distinguish *note produced* from *note retrieved*, *note actually used*, and *note later found misleading*.
 
 ### Non-goals for the initial scope
 
@@ -143,11 +156,10 @@ This document uses three labels:
 | **Active project** | The project their agent work is contributing to | Persistent user/agent activation binding; snapshotted on each session |
 | **Project member** | Someone who can benefit from and contribute to shared notes | Membership, role, and collaboration mode |
 | **Blueprint** | A sensible starting point, e.g. Software or Research | Default ontology, extraction, curation, insights, Night Shift, and retrieval settings |
-| **Project board (optional)** | Organized shared notes for stateful collaboration | Placements, attributes, tags, typed dependencies and revision checks |
+| **Project board** | Organized shared notes for stateful collaboration | Placements, attributes, tags, typed dependencies and revision checks |
 | **Session subscription** | Updates about notes this active session is watching | Scoped selectors, durable cursors and host-specific steering delivery |
 | **Original note** | Something Context learned directly from a source session | Immutable/versioned extracted evidence with source/session identity |
 | **Shared/canonical note** | The reconciled project understanding | Versioned synthesis supported by one or more originals or derived inputs |
-| **Briefing** | What changed since I last worked here? | Personalized summary of new decisions, corrections, unresolved conflicts, and Night Shift |
 | **Impact** | Where did project knowledge help or mislead? | Evidence-based attribution using retrieval, usage, feedback, and later contradictions |
 | **Night Shift** | Daily knowledge maintenance and insight discovery | Scheduled, auditable, project-steered maintenance job |
 | **Rollback** | Undo information learned from a session or note | Impact preview, provenance traversal, targeted retirement/re-synthesis, progress tracking |
@@ -296,24 +308,6 @@ support, bounded retries may be enabled after rollout verification.
 
 If rollout status or evidence is insufficient, the combined note explicitly says **unresolved / needs review** rather than manufacturing certainty. Both contributors' source evidence remains traceable.
 
-### Scene 7 — Return to the project: `/context briefing`
-
-After a few days away, Avery enters Claude Code and asks:
-
-```text
-/context briefing
-```
-
-The briefing answers what changed since Avery last worked on the project:
-
-- The gateway v2 idempotency capability is new; retry guidance now differs by endpoint.
-- Jordan confirmed a new API constraint in integration testing.
-- An older retry policy is superseded for a specific operation, not globally.
-- Night Shift found an unresolved risk involving retry behavior in a background worker.
-- Two notes await review because new evidence partly conflicts.
-
-Every claim can be opened to its project note and evidence. The briefing is not merely a list of documents; it is an actionable orientation to the project's evolving state.
-
 ### Scene 8 — See value: `/context impact`
 
 Avery asks:
@@ -368,7 +362,7 @@ Avery can inspect the implications and start the job. The system retracts S-108'
 
 Overnight, **Night Shift** reviews the project's goals, new notes, stale facts, temporal changes, contradictions, and retrieval feedback. It may consolidate overlapping notes, deprecate stale ones, correct well-supported errors when policy permits, and **propose or publish novel inferred insights** with explicit evidence and confidence.
 
-In the morning, the briefing includes:
+The maintenance report includes:
 
 ```text
 Night Shift insight (inferred; review suggested):
@@ -383,7 +377,7 @@ An owner may run Night Shift on demand or steer what it should watch for. Avery 
 
 ### Scene 11 — The same mental model works outside software engineering
 
-A researcher creates a **Collaborative Research** project with a blueprint tuned for claims, methods, evidence, uncertainties, and competing hypotheses. An ETL team chooses **Data & Pipelines** for data lineage, schemas, transformations, and data-quality findings. A BI team chooses **Business Intelligence** for metrics, definitions, assumptions, and evolving insights. In all cases, the interaction remains: create or join → work normally → retrieve/brief → inspect/correct as needed.
+A researcher creates a **Collaborative Research** project with a blueprint tuned for claims, methods, evidence, uncertainties, and competing hypotheses. An ETL team chooses **Data & Pipelines** for data lineage, schemas, transformations, and data-quality findings. A BI team chooses **Business Intelligence** for metrics, definitions, assumptions, and evolving insights. In all cases, the interaction remains: create or join → work normally → retrieve → inspect/correct as needed.
 
 ---
 
@@ -394,10 +388,10 @@ A researcher creates a **Collaborative Research** project with a blueprint tuned
 Morgan creates **Daily Revenue Reliability** with the Data Engineering blueprint.
 The project already extracts useful notes from ordinary work. Morgan asks:
 
-> “Enable a board for this project. Organize milestones, pipeline work, and insights.
+> “Use this project’s board. Organize milestones, pipeline work, and insights.
 > Keep the revenue dataset's definitions and validation evidence easy to find.”
 
-The agent enables the optional board and creates `/milestones/daily-revenue`,
+The agent uses the project board and creates `/milestones/daily-revenue`,
 `/pipelines/orders`, and `/insights/revenue`. Existing extracted notes stay where
 and as they were until explicitly placed; their IDs and evidence do not change.
 Three independent active sessions—Avery handling ingestion, Sam implementing
@@ -493,18 +487,16 @@ the session ends, its subscriptions expire. A later session explicitly subscribe
 again rather than inheriting invisible watches.
 
 Jordan attaches passing reconciliation results, and an authorized revision-checked
-transition completes the milestone. Briefing reports the accepted work, unresolved
-risks, and updated insights with evidence. Impact distinguishes delivered changes,
+transition completes the milestone. Impact distinguishes delivered changes,
 observed note reads, and validated downstream fixes; it does not attribute success
 to the board merely because a notification was emitted.
 
 **Gym evidence for this scenario:** isolated real-agent sessions, a versioned seed
 ETL/data project, externally checked query/dataset outputs, recorded note reads and
 injected events, conflicts/reconnects, and a source-retraction test. Compare matched
-board-enabled and board-disabled arms while holding ordinary note retrieval,
+structured-board and unorganized-notes arms while holding ordinary note retrieval,
 models, task prompts, and shared-code publication constant. An additional
-notifications-disabled arm can isolate the effect of steering. A board-disabled
-project must still complete ordinary note capture/retrieval workflows. This
+notifications-disabled arm can isolate the effect of steering. A project using only unorganized notes must still complete ordinary note capture/retrieval workflows. This
 scenario is a product contract, not a report of a completed live run.
 
 ## 7. User stories
@@ -526,7 +518,6 @@ scenario is a product contract, not a report of a completed live run.
 | US-13 | As a contributor, I can retract an entire accidentally included session. | Preview shows transitive blast radius; all supported rollback modes are offered. |
 | US-14 | As a contributor, I can choose how exhaustive rollback should be. | Full, bounded, and bounded + semantic scan state costs and guarantees accurately. |
 | US-15 | As an auditor, I can follow source/derived note lineage. | Original evidence and transformations remain available where authorized. |
-| US-16 | As a team member, I can ask for a project briefing. | Includes relevant changes since my last interaction and new Night Shift insights. |
 | US-17 | As a contributor, I can see how my notes affected my team. | Impact separates exposure, demonstrated usefulness, corrections, and uncertainty. |
 | US-18 | As an owner, I can steer project extraction and automatic correction. | Natural-language policies support high-confidence auto-correction or review-only. |
 | US-19 | As an owner, I can schedule or manually run Night Shift. | Daily maintenance and on-demand execution have inspectable results. |
@@ -605,7 +596,6 @@ scenario is a product contract, not a report of a completed live run.
 
 | ID | Priority | Requirement | Verification / acceptance criterion |
 |---|---|---|---|
-| VAL-01 | P1 | Implement `/context briefing`. | New and changed knowledge since last visit is personalized and evidenced. |
 | VAL-02 | P1 | Implement `/context impact`. | Exposure, observed usage, favorable signals, and misleading/corrected cases remain distinct. |
 | VAL-03 | P1 | Track note retrieval events and subsequent session feedback. | A later contradiction can be associated with a previously retrieved note. |
 | VAL-04 | P1 | Feed quality signals back into extraction and correction. | Accepted/rejected/incorrect notes inform improvement without weakening privacy. |
@@ -626,11 +616,11 @@ scenario is a product contract, not a report of a completed live run.
 | RSN-03 | Future | Validate claims against explicit schemas/shapes and classify uncertain or contradictory extractions before publishing. | Bad entity types, missing scopes, sensitive content, and unsupported claims are not silently promoted into trusted facts. |
 | RSN-04 | Future | Run controlled external inference and retain **each independent justification** for every inferred claim. | Withdrawing one premise removes only conclusions whose remaining valid justifications are insufficient. |
 | RSN-05 | Future | Apply project ACLs, time/scope compatibility, and source retraction consistently across text, formal claims, graph links, and inference results. | Rollback and temporal tests pass with both text and formal representations enabled. |
-| RSN-06 | Future | Keep structured reasoning invisible in the default agent UX. | Project creation, normal search, Briefing, and Night Shift remain useful without ontology or logic terminology. |
+| RSN-06 | Future | Keep structured reasoning invisible in the default agent UX. | Project creation, normal search and Night Shift remain useful without ontology or logic terminology. |
 
 ---
 
-### 8.7 Optional board and unified notes (new in v0.3)
+### 8.7 Project board and unified notes (new in v0.3)
 
 P0 in this table means required for the board capability when offered; it does not
 make board activation a prerequisite for ordinary project use. `MEM-*` IDs above
@@ -638,7 +628,7 @@ are retained for traceability, with their objects now named notes.
 
 | ID | Priority | Requirement | Verification / acceptance criterion |
 |---|---|---|---|
-| BRD-01 | P0 | Board opt-in, disable/re-enable, no duplicate note store. | Board-off workflows pass; placement retains the original note ID. AT-25. |
+| BRD-01 | P0 | Every project has one board; organization is optional, with no duplicate note store. | Unorganized-note workflows pass; moving items retains the original note ID. AT-25. |
 | BRD-02 | P0 | Read/create/update/list notes, folder prefixes and tags. | Scoped pagination, segment-aware prefixes, explicit tag all/any semantics. AT-26. |
 | BRD-03 | P0 | Hierarchical placement and moves independent of content lineage. | Moves preserve identity and reject invalid paths/cycles. AT-26, AT-32. |
 | BRD-04 | P0 | Blueprint-validated attributes plus flexible custom JSON attributes. | Invalid typed writes fail; custom fields cannot override protected fields. AT-27. |
@@ -665,6 +655,15 @@ are retained for traceability, with their objects now named notes.
 | SUB-08 | P0 | Separate transport receipt, harness injection and agent handling. | No false acknowledgment or claim of attention/use on socket write. AT-34, AT-39. |
 | SUB-09 | P0 | Bound event queues, rate and payload size; expose coalescing/overflow. | Retain refresh signals and latest state rather than silently losing work. AT-34. |
 | SUB-10 | P0 | Treat all note notifications as untrusted data and include purge in retention controls. | No instruction escalation or replay of purged text. AT-36, AT-39. |
+
+### 8.9 Project Connections (v8)
+
+| ID | Requirement | Acceptance |
+|---|---|---|
+| CON-01 | Discover sources by search or known URL, inspect a match and explicitly attach it through Claude Code or Spindle UI. | AT-41 |
+| CON-02 | List and remove project connections across both surfaces. Apply project scope and ranking to authorized retrieval. | AT-41, AT-42 |
+| CON-03 | Suggest relevant accessible sources asynchronously. Support inspection, acceptance, rejection with an optional reason, and continuing work with a suggestion pending. | AT-43 |
+| CON-04 | Enforce source access at discovery, display and retrieval. Apply dismissal feedback per user. | AT-42, AT-43 |
 
 ## 9. Permissions, sharing, and trust boundary
 
@@ -879,7 +878,6 @@ do not depend on that future phase.
 | **Feedback and impact service** | Correlate retrieval with later usage, correction, contradiction and optional user feedback. |
 | **Rollback coordinator** | Preview scope, select mode, execute idempotent staged resynthesis, track partial failures and completion. |
 | **Night Shift orchestrator** | Scheduled/on-demand upkeep, synthesis, stale detection, evidence-based inference, run reports. |
-| **Briefing service** | Summarize what changed since a user's previous visit, with evidence links and action suggestions. |
 | **Structured-claim + reasoning service (future)** | Extract optional typed claims from note versions, validate their schema, project selected claims into an optional graph adapter, evaluate governed rules, and record alternate derivation justifications. Not on the critical path for creating or searching text notes. |
 
 ### 11.4 Tenant and project isolation
@@ -934,7 +932,7 @@ For operational determinism, use fixed source sets, explicit ordering, immutable
 ### 13.1 Three explicit search modes
 
 1. **Blended (default while active):** Search the active project's notes plus the user's otherwise accessible context graph. Project relevance is an input to ranking, **not an unconditional override**.
-2. **Project-only:** Search notes owned by the specified project, with optional authorized linked-entity evidence if policy explicitly allows it. Useful for audits and narrowly scoped queries.
+2. **Project-only:** Search project-owned notes and explicitly attached sources accessible to the caller (§32), with optional authorized linked-entity evidence if policy explicitly allows it. Useful for audits and narrowly scoped queries.
 3. **General/no-project:** Search the wider graph as it behaves today, without an active project's boost or project-only filter.
 
 A programmatic retrieval API should accept an optional `projectId` and mode. If the active plugin session supplies a project and the caller does not explicitly override it, default to blended retrieval. Always check membership; no implicit fallback that accidentally reveals project content.
@@ -1136,18 +1134,6 @@ Show both individual and team perspectives, with separate measures for:
 
 **Gamification ideas to test:** Quiet, useful milestones such as “Your architectural decision informed three teammates,” a weekly “knowledge saved from being rediscovered” digest (clearly an estimate if calculated), and recognition for **fixing** misleading notes—not just creating new ones. Avoid a single opaque leaderboard or punitive score that incentivizes oversharing, note spam, false certainty, or reluctance to correct errors. Every numerator and denominator should be explainable.
 
-### 15.4 `/context briefing`
-
-Personalize to a member's last visit, interests, contribution focus, and current project goals. Suggested sections:
-
-1. **Important changes:** New decisions, changed rules, newly confirmed facts, and time-sensitive updates.
-2. **Team contributions:** Discoveries by other members that affect the viewer's likely work.
-3. **Open issues:** Genuine unresolved contradictions, risky assumptions, and evidence gaps.
-4. **Night Shift report:** Consolidations, deprecations, suggested actions, and new inferred insights.
-5. **Your follow-ups:** Pending review requests, rollback progress, and notes that may need your input.
-
-This should appear as an answer within the agent, with optional drill-down into each note and source. Avoid duplicating everything the user already knows.
-
 ### 15.5 Adaptive quality improvement
 
 Use positive/negative signals to refine note extraction, entity linking, duplicate thresholds, reranking, and correction policy recommendations. The system may learn that a project lead contributes important design rationale while an implementer contributes service contracts and integration facts. Treat learned focus as **revisable suggestions**, not irreversible profiling. Personal global exclusions remain hard limits.
@@ -1169,7 +1155,7 @@ Use positive/negative signals to refine note extraction, entity linking, duplica
 5. **Gap discovery:** Compare known project goals with what the project knows; surface consequential missing evidence.
 6. **Note-effectiveness review:** Revisit notes previously retrieved and then flagged misleading or contradicted. Feed conclusions into future extraction and ranking.
 7. **New inference/insight synthesis:** Derive plausible new insights, connections, risks, or next questions from existing evidence; record them as inferences with provenance and confidence.
-8. **Project health report:** Summarize maintenance work, outstanding reviews, uncertain insights, and likely next actions for Briefing.
+8. **Project health report:** Summarize maintenance work, outstanding reviews, uncertain insights, and suggested follow-up checks.
 
 ### 16.3 Steering
 
@@ -1191,7 +1177,7 @@ Blueprint defaults include Night Shift and inference instructions. Project goals
 - Insights carry `originKind: inferred`, confidence, scope, and citations to supporting notes/source evidence.
 - Do not create infinite self-reinforcement by counting a derived insight's own descendants as independent proof of the original inference.
 - Night Shift resynthesis must honor retracted sources and concurrent rollback jobs.
-- Maintain an audit/change report that the project can summarize in Briefing.
+- Maintain an inspectable audit/change report.
 
 ### 16.5 Example commands
 
@@ -1324,7 +1310,6 @@ A user should be able to say “Create a project for our migration,” “What d
 | `/context leave` | Deactivate project capture for future sessions in the relevant activation scope. |
 | `/context status` | Active project, capture state, effective privacy summary, and useful next commands. |
 | `/context projects` | List accessible projects and their goals/roles. |
-| `/context briefing` | What's new, important, or unresolved since last visit. |
 | `/context impact` | Contribution/reuse/correction evidence; personal or team view as authorized. |
 | `/context notes mine` | Show originals and affected shared notes, filter by session/date/status. |
 | `/context notes inspect <id>` | Show a note's meaning, source evidence, time, and provenance. |
@@ -1336,7 +1321,7 @@ A user should be able to say “Create a project for our migration,” “What d
 | `/context project settings` | Conversational project instructions, correction mode, blueprint overrides, members. |
 | `/context night-shift status|run|report` | Daily maintenance status, execution, and evidence-based changes. |
 
-**Avoid command proliferation in the beginner experience.** The first-run guidance might mention only `/context status`, `/context briefing`, and `/context leave`. Other commands appear when the user asks the relevant question.
+**Avoid command proliferation in the beginner experience.** The first-run guidance might mention only `/context status`, `/context create`, and `/context leave`. Other commands appear when the user asks the relevant question.
 
 ### 18.3 Host capability constraints
 
@@ -1362,7 +1347,7 @@ The design should support both first-party slash commands and ordinary agent too
 
 | Operation | Example agent-tool name | Expected behavior |
 |---|---|---|
-| Optional board and subscriptions | `context.board.*`, `context.subscriptions.*`, `context.changes.*` | See §30 for lifecycle, filters, delivery and authorization. |
+| Project board and subscriptions | `context.board.*`, `context.subscriptions.*`, `context.changes.*` | See §30 for lifecycle, filters, delivery and authorization. |
 | Create project | `context.projects.create` | Create from graph instance, name/goal, optional blueprint. |
 | Read/list/update project | `context.projects.get/list/update` | Include goals, blueprint provenance, policy versions. |
 | Invite/join/leave | `context.projects.invite/join/leave` | Enforce project membership and simple ACL. |
@@ -1373,7 +1358,7 @@ The design should support both first-party slash commands and ordinary agent too
 | Inspect/correct | `context.notes.list/get/correct/flag` | Source, version, time, lineage, policy-dependent writes. |
 | Preview/execute rollback | `context.rollback.preview/start/status` | Estimate affected closure, choose mode, report progress. |
 | Privacy settings | `context.privacy.get/update/scan` | Version exclusions and offer historical remediation. |
-| Briefing/impact | `context.briefing.get`, `context.impact.get` | Evidence-based value surfaces. |
+| Impact | `context.impact.get` | Evidence-based usage signals. |
 | Night Shift | `context.nightShift.status/run/report` | Daily/on-demand maintenance with change history. |
 | Blueprints | `context.blueprints.list/get` | Discover built-in starting configurations. |
 
@@ -1491,7 +1476,7 @@ The complete feature is the target described by this specification. The followin
 
 ### Milestone B — Product value and control loop
 
-- Optional board: unified notes, folder/tag listing, typed/custom attributes, time,
+- Project board: unified notes, folder/tag listing, typed/custom attributes, time,
   typed dependencies, concurrency checks and policy-safe Night Shift integration.
 - Session subscriptions: consistent snapshots/cursors, replay and safe delivery,
   actual host steering capability tests and explicit polling fallback.
@@ -1499,7 +1484,7 @@ The complete feature is the target described by this specification. The followin
   and matched notification exposure. These features remain in prototype scope.
 
 
-- `/context briefing`, `/context impact`, and later-use/contradiction feedback.
+- `/context impact`, and later-use/contradiction feedback.
 - Configurable author-controlled vs collaborative correction model.
 - Review/auto-correction steering and project-policy versioning.
 - Daily/on-demand Night Shift, evidence-grounded inferred insights.
@@ -1563,7 +1548,6 @@ These items are intentionally **not** presented as settled commitments.
 1. What is the smallest compelling Impact view? Teammate reuse counts, “decision prevented repeated work,” quality improvements, or a combination?
 2. What constitutes evidence of *actual benefit*, versus mere retrieval? Can an agent reliably detect that a retrieved note changed a later decision or implementation?
 3. How should negative effectiveness be framed? An educational correction signal rather than a punitive reputation score is recommended, but should users see detailed per-note histories by default?
-4. Would a daily/weekly briefing, an agent-start summary, or optional team digest create value without notification fatigue?
 5. What feedback signals can be collected without storing or sharing excessive user/session detail?
 
 ### 23.2 Activation and agent-host behavior
@@ -1684,9 +1668,9 @@ These are illustrative behavior-driven tests for engineering and the later UX pr
 
 **Given** an author-controlled project, **when** a member attempts to change another author's original contribution, **then** the action is denied or offered as a flag/review; **when** the same member edits a shared note in collaborative mode, **then** the edit is allowed with a versioned audit event but not access to the other author's private raw session.
 
-### AT-15 — Briefing and Impact
+### AT-15 — Impact
 
-**Given** teammates have created, reused, and corrected project notes, **when** a member requests Briefing or Impact, **then** they receive evidence-backed updates and separate measures for retrieval exposure, observed helpful use, and later misleading/corrected cases.
+**Given** teammates have created, reused, and corrected project notes, **when** a member requests Impact, **then** they receive evidence-backed updates and separate measures for retrieval exposure, observed helpful use, and later misleading/corrected cases.
 
 ### AT-16 — Night Shift produces an inference safely
 
@@ -1726,13 +1710,13 @@ These are illustrative behavior-driven tests for engineering and the later UX pr
 
 ---
 
-### AT-25 — Optional board and one note identity
+### AT-25 — Standard board and one note identity
 
-**Given** a project without a board, **then** capture, note search, correction and
-Night Shift work normally. **When** a member with configuration authority enables
-the board and places an extracted note, **then** the same note ID, version lineage
-and retrieval object remain. Removing placement or disabling/re-enabling the board
-does not erase the note or silently restart expired subscriptions.
+**Given** a newly created project, **then** a board exists without an enablement
+prompt. Capture, note search, correction, and Night Shift work with unorganized
+notes. **When** a member places an extracted note in a hierarchy, **then** the same
+note ID, version lineage, and retrieval object remain. Removing a placement does
+not erase the note or silently restart expired subscriptions.
 
 ### AT-26 — Folder and tag discovery
 
@@ -1829,7 +1813,7 @@ steal a claim, renew a worker lease or mark a milestone complete from stale pros
 
 ### AT-38 — Subscription lifecycle
 
-**Given** session end, lease expiry, board disablement, project archival, or an
+**Given** session end, lease expiry, explicit unsubscribe, project archival, or an
 active-project switch, **then** watches expire/suspend according to §30.7 and never
 silently follow a different session/project. A new session subscribes explicitly;
 a reconnect can resume only the same still-authorized live session.
@@ -1845,16 +1829,94 @@ change tool authority, and is not promoted into system/developer instructions.
 ### AT-40 — Data-project team episode
 
 **Given** isolated ingestion, transform and validation agents with a shared project,
-**when** they execute §6B in matched board-enabled and board-disabled arms, **then**
+**when** they execute §6B in matched structured-board and unorganized-notes arms, **then**
 external graders check the actual dataset/query outputs, milestone evidence,
 concurrency handling, source correction and subscription lifecycle. Record models,
 cost, trajectories and observed knowledge exposure. A single success or scripted
 fixture is not evidence of a causal productivity gain; live host coverage and
 repeated comparisons are reported separately.
 
+### AT-41 — Discover, attach and remove
+
+In Claude Code, search for the support-events table, inspect it and attach it. In the Connections view, paste the data contract URL, inspect the resolved wiki and attach it. List both connections from each surface. Repeat an add using a URL alias for the same source and verify one connection. Remove the wiki from the UI and verify its removal in Claude. Repeat discovery and removal with the surfaces reversed. An unknown or unauthorized URL yields no identifying preview and no connection.
+
+### AT-42 — Retrieve with project scope and source access
+
+With both sources attached, ask the replay question in §32. Verify the answer attributes the project decision to N-104 and the details read from each source to that source. Check project-only eligibility and compare ranking inputs in blended and general modes for the same caller. Revoke wiki access for one member and repeat listing, search and detail retrieval as that member. Those responses must omit protected wiki details even if an earlier result was cached. Remove the table connection and verify its project ranking benefit ends while the table, N-104 and its independent graph reference survive.
+
+### AT-43 — Act on a suggestion during work
+
+While Avery is validating the dataset, surface a suggestion for the quality-check project. Continue validation with the suggestion pending, then ask why it appeared. Check that neither step attaches it. Accept it twice and verify one shared connection. Reject an obsolete pipeline suggestion with a reason, then dismiss a different suggestion without giving a reason. Verify that later suggestions to Avery take the feedback into account and that another eligible member can still receive the obsolete pipeline suggestion without seeing Avery’s reason.
+
 ## 25. Prototype handoff: what the later clickable HTML mock should demonstrate
 
 The next design artifact, a self-contained clickable HTML/JavaScript prototype, should allow a stakeholder to experience the product **as a Claude Code session**, not as an administrator's dashboard. The feature should feel discoverable in-place.
+
+**Prototype iteration, November 9, 2026:** The customer-facing mock is named
+**AWS Context Spindle**, with the introduction positioning Spindle as a new feature
+of AWS Context. This is requested design positioning, not a claim of a deployed
+AWS integration; the standalone implementation architecture remains unchanged.
+The three outer tabs remain Introduction, Claude Code, and Spindle UI. Claude
+Code is the primary experience. `/context new-project` guides name, blueprint,
+goal, passive filtered extraction, a standard board, and confirmation. Sample sessions
+follow an agent-facing support-data ETL product and teach voluntary peer sharing,
+source-backed notes, corrections, board coordination, and observable reuse.
+
+The UI starts at **Your workspace**; selecting a project reveals Project Overview,
+Project Board, Sessions, Impact, and Night Shift. The v8 design adds a Connections view (§32). Project Board combines
+unorganized notes with nested folders for decisions, tasks, and milestones. The CLI exposes the
+same items. Project settings includes PII/credential guardrails alongside personal
+exclusions. `/context impact` displays ASCII graphs separating project-wide use
+from individual notes and corrections; the UI preserves that distinction.
+Night Shift explains stale-note, duplicate, conflict, sensitive-content, and
+stale-work checks with focus/review controls first. Plain evidence-linked findings
+replace unexplained confidence labels. These refinements supersede conflicting
+scene presentation details below, while formal reasoning remains out of scope.
+
+**Latest prototype refinement:** Put a small Spindle concepts section directly
+under the introduction headline. Present Claude-style numbered choices (including
+custom answers/blueprints), tool-call/result indicators, and passive hook messages.
+`/context use` opens a project picker. Capture and citation are shown as automatic
+hooks, with explicit inspect/correct/revert controls afterward. Board and impact
+commands use colored terminal tables. Keep workspace navigation on the UI landing
+page; project selection adds project-specific navigation. Present folders as a
+collapsible hierarchy with tags and colored status/attribute badges, replacing the
+earlier swimlane presentation.
+
+**Board browsing and agent coordination refinement:** Recent-activity highlights
+sit above a folder browser and compact, paginated note tiles. Folder selection
+includes descendants; selecting a note opens its full text, attributes, evidence,
+and relationships. The board UI has no subscription control; active-session
+subscriptions remain available through agent tools. The coordination example
+shows a delegated sub-agent discovering existing work, avoiding duplicate effort,
+updating task attributes with validation evidence, and publishing a handoff using
+context note tools rather than human-operated slash commands.
+
+Notes can optionally reference existing AWS Context graph entities, such as the
+Redshift table `analytics.support.support_events_gold`, through explicit typed
+relationships such as `applies_to`. These references are separate from derivation
+inputs and source-session evidence. They aid discovery from a resource without
+copying its contents or proving the note's claim. Authorization applies to both
+the note and referenced entity; a relationship cannot grant access. Notes remain
+usable without graph relationships. This is a non-formal product relationship,
+not a Phase 2 reasoning requirement or proof of a live AWS connector.
+
+**Natural-language and inspection refinement:** Inspection, correction, version
+revert, and owner-scoped note search should be discoverable through normal user
+requests; the harness selects the corresponding context tools. A source-session
+reference must not be silently treated as a note reference: clarify withdrawal
+scope and preview effects before confirmation. Generated human-facing note
+references should be short project-local sequence numbers; existing immutable
+references remain compatible and are not mass-renamed.
+
+Guardrails are structured detector records, including natural-language LLM
+instructions and deterministic regex rules (for example, YubiKey OTP filtering),
+with explicit redaction/exclusion actions. Privacy inspection shows detector
+definitions and safe detection summaries. Prototype surrogates and illustrative
+results must not be presented as live model evaluation. Referenced graph entities
+may show a compact, clearly labeled neighborhood view with a bounded neighbor
+count and hop depth. Path, kind, tag, and custom-attribute editing supports typed
+suggestions and new values, subject to privacy, schema, and reserved-field rules.
 
 **Prototype scenes:**
 
@@ -1864,7 +1926,7 @@ The next design artifact, a self-contained clickable HTML/JavaScript prototype, 
 4. **Persistent active status:** A visible active-project cue that survives simulated “new session.”
 5. **Session activity and extraction:** Agent code/review conversation, simulated end hook, reviewable original/canonical notes.
 6. **Teammate perspective:** Switch mock identity to a colleague, query the graph, see project-boosted answer and source evidence.
-7. **Briefing and Impact:** Clickable snapshots showing team reuse, useful outcomes, disputed note, and Night Shift changes.
+7. **Impact:** Clickable snapshots showing team reuse, useful outcomes, disputed note, and Night Shift changes.
 8. **Inspect note:** Drill from a shared note into source contributions, temporal qualifiers, and lineage tree.
 9. **Correct/retract:** Select a mistaken session, preview transitive fan-out, choose rollback mode, and watch a simulated progress sequence.
 10. **Project steering:** Adjust contributor focus, global exclusion, correction mode, and blueprint settings conversationally.
@@ -2144,10 +2206,10 @@ No visible “OWL class,” “SHACL shape,” “SMT clause,” or “Datalog d
 **Adopted in v0.3:** Use **note** as the common content noun. Use **source note**,
 **authored note**, **derived/shared note**, **insight**, or **task note** when the
 distinction matters. “Memory” describes the historical concept in v0.2, not another
-customer-visible object. A board is an optional organization of notes. Folders,
+customer-visible object. Every project has a board; choosing how much to organize its notes is optional. Folders,
 tags and subscriptions should appear only when a project uses that capability.
 
-Keep Projects, Blueprints, Night Shift, Briefing and Impact. Source/evidence,
+Keep Projects, Blueprints, Night Shift, Impact. Source/evidence,
 uncertainty, time, partial cleanup and unsupported delivery capabilities must remain
 clear. A note is not inherently true, a task is not inherently done, and a delivered
 notification is not inherently read or acted on. Use “Where this came from” for
@@ -2159,37 +2221,39 @@ storage migration. Do not mass-rename immutable IDs, historical audit events or
 implementation migration must qualify old clients and idempotent retries before
 removing legacy names. Naming is adopted here; implementation migration is separate.
 
-## 30. Optional project board and live session subscriptions
+## 30. Project board and live session subscriptions
 
-### 30.1 Purpose, scope, and optionality
+### 30.1 Purpose, scope, and optional organization
 
-**Agreed in v0.3:** A project may have an optional board for agents to organize and
-collaborate through notes. Notes may be extracted, explicitly authored, or derived.
-They support hierarchical organization, attributes governed by a blueprint's
-ontology or flexible custom attributes, tags, valid time, and dependencies. Agents
-can read, list, create, and update notes. Active sessions can subscribe to selected
-notes, tags, folder prefixes, or combinations, with changes delivered through a
-harness steering hook where supported. Night Shift can refine notes and identify
-stale information or work.
+**Updated decision:** Every project has a board from creation. There is no board
+enablement prompt or disable/re-enable lifecycle. Whether agents organize or use
+the board actively is their choice. This supersedes the earlier optional-board
+proposal. Notes may be extracted, explicitly authored, or derived. They support
+hierarchical folders, blueprint-governed or flexible attributes, tags, valid time,
+and dependencies. Agents can read, list, create, and update notes.
 
-**Proposed defaults below** make that contract testable. They are product design,
-not claims that the current service, Codex, Claude Code, or NeMo implements them.
+- Unorganized notes require no folder setup. A board never introduces a second
+  copy of project knowledge. Moving or unplacing a note preserves its stable ID,
+  source evidence, and version history.
+- Partial-session hooks submit filtered updates as conversation progresses.
+  Extraction is asynchronous; newly captured notes appear as passive in-flow hook
+  notifications, without a capture command or interruption. Users can inspect,
+  correct, revert, or retract the contributed note.
+- Active sessions subscribe with an explicit intent and filters over note IDs,
+  tags, folder prefixes, or combinations. Content, attributes, tags, and hierarchy
+  changes emit events; supported harness hooks deliver matching changes passively.
+  Session end, unsubscribe, access revocation, and project archive stop delivery.
+- Tool-result hooks record observed note use automatically when references are
+  present. No manual citation slash command is required; retrieval exposure is
+  distinct from observed use, and neither proves task success.
+- A board is an organizational interface, not a required web app, Kanban workflow,
+  task runner, or replacement for the software factory's Git tasks. Projects need
+  not adopt task statuses or owners. The UI presents a hierarchy with tags and
+  attribute badges; the CLI can present a compact table of paths and items.
 
-- Board disabled by default. Creating a project, capturing extracted notes, search,
-  provenance, correction, and Night Shift require no folders or board setup.
-- One optional board per project initially. Enabling it introduces organization
-  and coordination tools; it does not create a second copy of project knowledge.
-- An existing extracted note can be placed on the board by its stable note ID.
-  Removing its placement leaves the note intact. Explicitly created board notes
-  enter the same authorized retrieval, privacy, versioning, and evidence system.
-- Disabling the board suspends board-specific writes and subscriptions, retains
-  placements and note content, and leaves ordinary note retrieval available.
-  Re-enabling restores organization; it does not silently restore old session
-  subscriptions. Archive, placement removal, retraction, and purge are distinct.
-- A board is an agent-native organizational interface, not a required web app,
-  Kanban workflow, task runner, or replacement for the software factory's Git tasks.
-  It can represent milestones, work, discoveries, datasets, decisions, or any other
-  project-specific concept. Projects need not adopt task statuses or ownership.
+These are product contracts, not claims that the current service or harness
+already implements the integrations. Night Shift retains provenance and review
+requirements when proposing maintenance.
 
 ### 30.2 Unified note identity and versioned organization
 
@@ -2242,7 +2306,7 @@ IDs, tags, and folder filters are tenant/project scoped. Listing supports:
 
 The default note search includes authorized board notes and unplaced notes. Board
 listing selects placed notes; ordinary note listing may explicitly include unplaced
-notes. Board-disabled projects retain ordinary note listing and search. Counts,
+notes. Projects using only unorganized notes retain ordinary note listing and search. Counts,
 facets, tag discovery, and dependency expansions must not leak unauthorized notes.
 
 ### 30.4 Blueprint ontology and flexible attributes
@@ -2387,7 +2451,7 @@ proof that its work is correct. Retries of injection deduplicate by event ID and
 session, acknowledging only after the declared stage succeeds.
 
 Subscriptions expire on session end/lease expiry, explicit cancellation, membership
-revocation, project archival, or board disablement. Reconnection to the same live
+revocation, project archival, or explicit unsubscribe. Reconnection to the same live
 session can resume within its lease. A new session must explicitly subscribe;
 it cannot impersonate or inherit the old session's cursor/authority. Switching
 active project does not silently retarget an existing subscription. Surface its
@@ -2427,7 +2491,7 @@ whole contaminated composite note merely by labeling it a task.
 
 | Tool family | Operations and contract |
 |---|---|
-| `context.board` | `enable`, `disable`, `status`; owner/config authority and visible lifecycle. |
+| `context.board` | Present in every project; hierarchical listing and revision-checked organization. |
 | `context.notes` | `create`, `get`, `list`, `update`, `correct`, `archive`; stable IDs, typed/custom attributes, tags, time, revisions and source lineage. |
 | `context.board.folders` | `list`, `move`; canonical prefix semantics, revision conflicts and large-move job status. |
 | `context.notes.dependencies` | `add`, `remove`, `list`; explicit relation family, scoped endpoints and cycle validation. |
@@ -2448,8 +2512,8 @@ microservice, or NeMo dependency is required for the initial local board.
 The board, attributes, valid time, dependencies, and active-session subscriptions
 are part of the non-formal-reasoning prototype scope. Stage core CRUD/listing,
 revision conflicts, and replay APIs before host-specific injection. Include a
-board-enabled data-project episode in the gym alongside the existing retry-policy
-scenario. Also retain a board-disabled regression path throughout development.
+structured-board data-project episode in the gym alongside the existing retry-policy
+scenario. Also retain a unorganized-notes regression path throughout development.
 
 Open sizing/product choices: folder depth and payload limits; subscription/session
 limits and replay retention; p95 delivery targets per host capability; default
@@ -2484,7 +2548,7 @@ The future Spindle-side scope is:
 3. Optionally deliver a stop-request message to the project's active agent sessions
    through the harness, recording actual delivery and any supported cancellation.
 
-These capabilities must also work for projects with the board disabled. Export of
+These capabilities must also work for projects that do not actively organize their board. Export of
 permitted general agent context is possible through the same adapter pattern, but
 has its own explicit scope and authority; project membership alone cannot authorize
 export of unrelated context or organization-wide data. Organization-wide shutdown
@@ -2504,7 +2568,7 @@ Personal exclusions, source permissions, tenant boundaries, retention and destin
 policy still apply. Board attributes, paths and tags can contain sensitive material
 and require the same filtering as note text. Never export credentials or request
 hidden model reasoning. Explain what is sent, why, to which destination, and under
-which policy; this is not an implicit consequence of enabling a board.
+which policy; this is not an implicit consequence of organizing a board.
 
 Proposed event envelope: stable event ID, schema version, tenant/context/project
 scope, authorized actor/session identifiers, observation and recording times,
@@ -2538,7 +2602,7 @@ inference, nor an incoming unverified hazard event can grant this capability.
 An external service may call the operation only through a separately delegated,
 authenticated control integration. A finding notification alone is advisory.
 
-Suspension is a durable project control state, distinct from board disablement,
+Suspension is a durable project control state, distinct from board organization,
 archival, source retraction or content deletion. The suspension commit advances a
 control generation and establishes an enforcement boundary. From that boundary:
 
@@ -2622,7 +2686,7 @@ All identifiers below are **deferred**, not current-phase acceptance gates.
 | FUT-AUD-03 | Keep hazard rules and organization-level analysis external. | External findings carry correlation/policy references but cannot execute project control without a delegated capability. |
 | FUT-CTL-01 | Enforce durable project suspension independently of notifications. | Direct/blended search, board tools, existing tokens, pending pages and cached paths cannot disclose suspended project content. |
 | FUT-CTL-02 | Fence concurrent agent and background work. | Suspension racing ingestion, synthesis, claims, Night Shift and dispatch rejects stale-generation publication and reports remaining work. |
-| FUT-CTL-03 | Optionally request agent stop through supported harness control. | No-board/no-subscription sessions included; offline, unsupported, injected, acknowledged and actually cancelled outcomes remain distinct. |
+| FUT-CTL-03 | Optionally request agent stop through supported harness control. | Unorganized-board/no-subscription sessions included; offline, unsupported, injected, acknowledged and actually cancelled outcomes remain distinct. |
 | FUT-CTL-04 | Provide restricted incident status and explicit safe resumption. | Duplicate/stale stop/resume requests, control authorization, audit continuity and reactivation tests pass without replaying stale mutations. |
 
 Future sizing decisions include event schema/destination protocols, trace granularity,
@@ -2630,3 +2694,33 @@ export retention and backpressure policy, incident-control roles and delegated
 trust, measurable enforcement latency, harness interruption capabilities and any
 organization-wide control aggregation. Capture these when scheduling this extension;
 do not add an organizational rule engine or a working kill switch to this phase.
+
+## 32. Project Connections
+
+A connection is a project’s reference to an existing source, such as a Redshift table, a wiki page, an agent context or another project. Its identity is the project and the source’s canonical identifier. A pending suggestion belongs to a user in a project. A note’s graph reference describes a relationship such as `applies_to`. Each has its own lifecycle. Attaching a source stores a reference. It grants no source permissions and supplies no evidence for a note until specific material is actually used and attributed.
+
+### Explicit discovery and retrieval
+
+From Claude Code or the project’s **Connections** view, search accessible company context by name or description, or paste a known source URL. Resolve URLs through a supported source provider and show the authorized title, type and location so the user can inspect the match before choosing **Attach**. If resolution fails, report that the source could not be resolved for this user. The resolver must avoid arbitrary URL fetching and disclosure of inaccessible metadata. Both surfaces list the same attachments and support removal.
+
+Check project membership, authority to change connections, and current source access on attachment. Check the viewer’s rights again when listing, ranking, previewing or reading details. A connection makes an eligible source available in project-only retrieval and adds a relevance boost in blended retrieval. General searches receive no project boost. When more detail is needed, the agent reads the underlying source as the caller and identifies what it used. Removing the connection ends the scope and boost it supplied. The source and independently authored notes and references retain their own lifecycles.
+
+In **Agent-ready Support Data**, Avery attaches the Redshift table `analytics.support.support_events_gold` and the support data contract wiki. Sam asks, “How should I handle replayed events, and which columns should I check?” Claude retrieves N-104 for the team’s decision to deduplicate by `event_id` and keep the latest `ingested_at`. It inspects the connected table schema for those columns and the wiki for the contract’s replay semantics. The answer links each detail to its origin and calls out any disagreement or unavailable detail.
+
+### Background suggestions
+
+While an agent works, Spindle looks for relevant sources the user can access across enterprise context, other agent contexts and other projects. Claude can show a short inline suggestion, such as “The Support Quality Checks project has replay checks relevant to your dataset.” The user can ask why it appeared, inspect the source or keep working. Pending suggestions also appear in Connections for that user. Only an explicit add or acceptance creates a connection.
+
+Acceptance rechecks access and records the suggestion decision together with creation or reuse of the project connection. Rejection accepts an optional reason, for example “Obsolete pipeline. Use the v2 contract.” Later discovery uses that feedback for the rejecting user. Other users retain their own suggestions and preferences.
+
+### Proposed MCP tools
+
+| Operation | Contract |
+|---|---|
+| `context.sources.search`, `context.sources.resolve` | Return authorized candidates for a query or a canonical match for a known URL. |
+| `context.sources.retrieve` | Inspect a candidate or read authorized source details needed for an answer. |
+| `context.connections.list`, `context.connections.add`, `context.connections.remove` | List visible connections, attach a canonical source once per project, or detach it. |
+| `context.suggestions.list`, `context.suggestions.inspect` | Return the caller’s pending suggestions for this project and explain a candidate’s relevance. |
+| `context.suggestions.accept`, `context.suggestions.reject` | Resolve a pending suggestion by attaching its source or recording personal feedback with an optional reason. |
+
+A prototype demonstration may use prepared suggestions, fixture source details and deterministic ranking. Label these as simulated. Production acceptance requires authorized provider reads and background discovery during project activity.
