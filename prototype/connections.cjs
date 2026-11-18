@@ -1,0 +1,74 @@
+const assert = require('node:assert/strict');
+const path = require('node:path');
+const {pathToFileURL} = require('node:url');
+const {chromium} = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
+
+(async () => {
+  const browser = await chromium.launch({args:['--no-sandbox']});
+  try {
+    const page = await browser.newPage({viewport:{width:1360,height:960}});
+    const errors = [];
+    page.on('pageerror', err => errors.push(err.message));
+    await page.route('https://**/*', route => route.abort());
+    await page.goto(pathToFileURL(path.join(__dirname,'index.html')).href);
+    const click = action => page.locator('[data-action="'+action+'"]').last().click();
+    const send = async text => {
+      await page.locator('#command').fill(text);
+      await page.locator('#command').press('Enter');
+      return page.locator('.cli-turn.assistant').last().innerText();
+    };
+    await click('tab:cli');
+    assert.match(await send('/context sources resolve https://context.example/tables/gold'), /events/);
+    assert.match(await send('/context sources retrieve events'), /Replay schema/);
+    await send('/context connections add events');
+    await send('/context connections add events');
+    await click('tab:ui');
+    await click('ui-project:agent-support');
+    await click('nav:connections');
+    assert.equal(await page.locator('[data-action="src:inspect:events"]').count(),1);
+    const find = async query => {
+      await page.locator('#source-query').fill(query);
+      await click('src:find');
+    };
+    await find('https://elsewhere.example/private');
+    assert.match(await page.locator('.modal').innerText(),/No accessible match/);
+    await click('close');
+    await find('https://context.example/wiki/support-contract');
+    await click('src:inspect:contract');
+    await click('src:add:contract');
+    await click('tab:cli');
+    const result = await send('/context search --project replay events');
+    for (const marker of ['N-104','context.sources.retrieve(events)','context.sources.retrieve(contract)']) assert.ok(result.includes(marker),marker);
+    await page.locator('.cli-turn.hook').filter({hasText:'Simulated source suggestion'}).waitFor();
+    assert.match(await send('Why was that suggested?'), /replay checks/);
+    assert.doesNotMatch(await send('/context connections list'),/quality/);
+    await send('/context suggestions reject legacy obsolete pipeline, use v2');
+    assert.ok((await send('/context suggestions list')).indexOf('freshness') < (await send('/context suggestions list')).indexOf('quality'));
+    await send('/context suggestions accept quality');
+    assert.match(await send('/context suggestions accept quality'),/Already connected/);
+    await click('tab:ui');
+    await page.screenshot({path:path.join(__dirname,'connections-preview.png'),fullPage:true});
+    await page.locator('#source-viewer').selectOption('Jordan');
+    assert.equal(await page.locator('[data-action="src:inspect:contract"]').count(),0);
+    await click('tab:cli');
+    assert.doesNotMatch(await send('/context search --project replay'),/retrieve\(contract\)/);
+    assert.match(await send('/context sources retrieve contract'),/unavailable/);
+    await page.waitForFunction(()=>document.querySelector('#terminal-output')?.innerText.includes('Simulated source suggestion'));
+    assert.match(await send('/context suggestions list'), /legacy/);
+    await send('/context suggestions reject legacy');
+    await click('tab:ui');
+    await page.locator('#source-viewer').selectOption('Avery');
+    await click('src:inspect:events');
+    await click('src:remove:events');
+    await page.reload();
+    await click('tab:cli');
+    assert.doesNotMatch(await send('/context connections list'),/events/);
+    assert.doesNotMatch(await send('/context search --project replay'),/retrieve\(events\)/);
+    const general=await send('/context search --general replay');
+    assert.match(general,/company context/);
+    assert.doesNotMatch(general,/project connection|N-104/);
+    assert.match(await send('/context inspect N-104'),/support_events_gold/);
+    assert.deepEqual(errors,[]);
+    console.log('PASS: discovery, explicit attachment, source access, scoped retrieval, personal suggestions, removal and persistence');
+  } finally { await browser.close(); }
+})().catch(error => { console.error(error); process.exitCode=1; });
